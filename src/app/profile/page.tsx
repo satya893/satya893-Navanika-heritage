@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { motion } from 'motion/react';
@@ -21,6 +21,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-brand-beige dark:bg-brand-blue flex items-center justify-center"><div className="w-10 h-10 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" /></div>}>
+      <ProfilePageInner />
+    </Suspense>
+  );
+}
+
+function ProfilePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab');
