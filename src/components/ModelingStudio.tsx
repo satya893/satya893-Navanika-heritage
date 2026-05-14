@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Sparkles, Box, Play, Check, Loader2, Image as ImageIcon, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
+import { analyzeTryOn } from '../lib/gemini';
 
 interface ModelingStudioProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function ModelingStudio({ isOpen, onClose, product }: ModelingStu
   const [activeTab, setActiveTab] = useState<'2d' | '3d' | 'video'>('2d');
   const [userPhoto, setUserPhoto] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [aiResult, setAiResult] = useState<{ assessment: string, meshDetails: string, videoWalk: string } | null>(null);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -29,16 +31,25 @@ export default function ModelingStudio({ isOpen, onClose, product }: ModelingStu
     }
   };
 
-  const handleGenerate = () => {
-    if (!userPhoto) return;
+  const handleGenerate = async () => {
+    if (!userPhoto || !product) return;
     setStep('generating');
     setIsGenerating(true);
     
-    // Simulate multi-phase generation
-    setTimeout(() => {
+    try {
+      const result = await analyzeTryOn(userPhoto, {
+        name: product.name,
+        category: product.category,
+        description: product.category === 'Sarees' ? 'hand-woven banarasi silk' : 'luxurious heritage fabric'
+      });
+      setAiResult(result);
       setStep('result');
+    } catch (error) {
+      console.error("AI Generation failed:", error);
+      setStep('result');
+    } finally {
       setIsGenerating(false);
-    }, 4500);
+    }
   };
 
   return (
@@ -48,7 +59,7 @@ export default function ModelingStudio({ isOpen, onClose, product }: ModelingStu
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-12 bg-black/90 backdrop-blur-xl"
     >
-      <div className="bg-[#050505] max-w-6xl w-full h-[85vh] relative flex flex-col md:flex-row shadow-2xl overflow-hidden rounded-3xl border border-white/10">
+      <div className="bg-[#050505] max-w-6xl w-full h-full md:h-[85vh] relative flex flex-col md:flex-row shadow-2xl overflow-y-auto md:overflow-hidden rounded-none md:rounded-3xl border border-white/10">
         <button onClick={onClose} className="absolute top-6 right-6 z-20 p-2 text-white/40 hover:text-white transition-colors bg-white/5 rounded-full hover:bg-white/10">
           <X size={20} />
         </button>
@@ -130,46 +141,95 @@ export default function ModelingStudio({ isOpen, onClose, product }: ModelingStu
                 <div className="flex-1 bg-black flex items-center justify-center">
                   {/* Result Displays based on Active Tab */}
                   {activeTab === '2d' && (
-                    <div className="relative w-full h-full">
-                      <Image src={userPhoto || ""} fill sizes="(max-width: 768px) 100vw, 60vw" className="object-cover opacity-80 mix-blend-screen" alt="VTON Result" />
+                    <div className="relative w-full h-full p-8 overflow-y-auto custom-scrollbar">
+                      <div className="flex flex-col md:flex-row gap-8 items-center h-full">
+                        <div className="relative w-full md:w-1/2 aspect-[3/4] rounded-2xl overflow-hidden border border-white/10">
+                           <Image src={userPhoto || ""} fill sizes="50vw" className="object-cover" alt="User Profile" />
+                           <div className="absolute inset-0 bg-brand-gold/10 mix-blend-overlay" />
+                        </div>
+                        <div className="w-full md:w-1/2 space-y-6">
+                           <div className="flex items-center gap-2 text-brand-gold">
+                             <Sparkles size={16} />
+                             <span className="text-[10px] uppercase tracking-widest font-black">AI Stylist Assessment</span>
+                           </div>
+                           <div className="text-white/80 font-serif leading-relaxed italic text-sm md:text-base border-l-2 border-brand-gold/30 pl-6 py-2">
+                             {aiResult?.assessment || "Our AI is refining the final details of your heritage showcase..."}
+                           </div>
+                           <p className="text-[10px] text-white/40 uppercase tracking-widest leading-loose">
+                             The {product?.name} features intricate patterns that will align beautifully with your posture. Our generative weaver suggests a side-drape to highlight the banarasi borders.
+                           </p>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {activeTab === '3d' && (
-                    <div className="w-full h-full flex items-center justify-center flex-col gap-4">
-                      <Box size={64} className="text-brand-gold animate-bounce" />
-                      <p className="text-[10px] uppercase tracking-widest text-brand-gold">3D Mesh Loading...</p>
+                    <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-8 overflow-y-auto">
+                      <div className="relative">
+                        <Box size={80} className="text-brand-gold animate-bounce" />
+                        <div className="absolute -inset-4 bg-brand-gold/20 blur-2xl animate-pulse -z-10 rounded-full" />
+                      </div>
+                      <div className="max-w-md space-y-4">
+                        <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-brand-gold">3D Heritage Mesh Configuration</h4>
+                        <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                          "{aiResult?.meshDetails || "Generating high-fidelity mesh with silk-refraction shaders..."}"
+                        </p>
+                        <div className="pt-4 flex justify-center gap-4">
+                           <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                              <span className="text-[8px] uppercase tracking-widest font-black text-white/40">Polygons: 1.2M</span>
+                           </div>
+                           <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                              <span className="text-[8px] uppercase tracking-widest font-black text-white/40">Rigging: AI-Bone v4</span>
+                           </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                   {activeTab === 'video' && (
-                    <div className="w-full h-full flex items-center justify-center flex-col gap-4">
-                      <Play size={64} className="text-brand-gold animate-pulse" />
-                      <p className="text-[10px] uppercase tracking-widest text-brand-gold">Cinematic Video Playing</p>
+                    <div className="w-full h-full flex flex-col items-center justify-center p-12 text-center space-y-8 overflow-y-auto">
+                      <div className="relative">
+                        <Play size={80} className="text-brand-gold animate-pulse" />
+                        <div className="absolute -inset-4 bg-brand-gold/20 blur-2xl animate-pulse -z-10 rounded-full" />
+                      </div>
+                      <div className="max-w-md space-y-4">
+                        <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-brand-gold">Veo Cinematic Sequence</h4>
+                        <p className="text-white/60 font-serif italic text-sm leading-relaxed">
+                          "{aiResult?.videoWalk || "Orchestrating a cinematic orbit in the heritage palace..."}"
+                        </p>
+                        <div className="pt-4 flex justify-center gap-4">
+                           <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                              <span className="text-[8px] uppercase tracking-widest font-black text-white/40">Resolution: 4K Heritage</span>
+                           </div>
+                           <div className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg">
+                              <span className="text-[8px] uppercase tracking-widest font-black text-white/40">FPS: 60 (Cinematic)</span>
+                           </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
 
                 {/* Tab Switcher */}
-                <div className="p-6 bg-white/5 border-t border-white/5 flex gap-4 justify-center">
+                <div className="p-4 md:p-6 bg-white/5 border-t border-white/5 flex flex-wrap gap-2 md:gap-4 justify-center">
                   <button 
                     onClick={() => setActiveTab('2d')}
-                    className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === '2d' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                    className={`px-4 md:px-6 py-2 md:py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === '2d' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
                   >
-                    <ImageIcon size={16} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">2D Try-On</span>
+                    <ImageIcon size={14} className="md:w-4 md:h-4" />
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">2D Try-On</span>
                   </button>
                   <button 
                     onClick={() => setActiveTab('3d')}
-                    className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === '3d' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                    className={`px-4 md:px-6 py-2 md:py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === '3d' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
                   >
-                    <Box size={16} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">3D Mirror</span>
+                    <Box size={14} className="md:w-4 md:h-4" />
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">3D Mirror</span>
                   </button>
                   <button 
                     onClick={() => setActiveTab('video')}
-                    className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === 'video' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
+                    className={`px-4 md:px-6 py-2 md:py-3 rounded-full flex items-center gap-2 transition-all ${activeTab === 'video' ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20' : 'bg-white/5 text-white/40 hover:bg-white/10'}`}
                   >
-                    <Play size={16} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider">Modeling Video</span>
+                    <Play size={14} className="md:w-4 md:h-4" />
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider">Modeling Video</span>
                   </button>
                 </div>
               </motion.div>
@@ -249,7 +309,7 @@ export default function ModelingStudio({ isOpen, onClose, product }: ModelingStu
 
           <div className="mt-auto pt-10 border-t border-white/5 text-center">
             <p className="text-[8px] uppercase tracking-[0.5em] font-black text-white/20">
-              Powered by Google Gemini 3 Flash & Veo Engines
+              Powered by Google Gemini 2.5 Flash & Veo Engines
             </p>
           </div>
         </div>

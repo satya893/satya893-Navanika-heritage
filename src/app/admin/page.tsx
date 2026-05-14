@@ -18,6 +18,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [giftCards, setGiftCards] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // New Product Modal State
@@ -63,8 +65,17 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (hasAccess) {
       fetchAdminData();
+      fetchGiftCards();
     }
   }, [hasAccess]);
+
+  const fetchGiftCards = async () => {
+    const gcSnap = await getDocs(query(collection(db, 'giftCards'), orderBy('createdAt', 'desc')));
+    setGiftCards(gcSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    
+    const couponSnap = await getDocs(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')));
+    setCoupons(couponSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
 
   const fetchAdminData = async () => {
     try {
@@ -368,9 +379,48 @@ export default function AdminDashboard() {
       setBroadcast({ title: '', message: '', link: '', targetUser: 'all', type: 'offer' });
     } catch (err: any) {
       console.error(err);
-      alert("Failed to send notification: " + err.message);
+      alert("Failed to send notification");
     } finally {
       setSendingBroadcast(false);
+    }
+  };
+
+  const handleGenerateGiftCard = async (amount: number) => {
+    if (!amount || amount <= 0) return alert("Please enter a valid amount");
+    const code = `NAV-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    try {
+      const { setDoc, doc } = await import('firebase/firestore');
+      await setDoc(doc(db, 'giftCards', code), {
+        amount,
+        isUsed: false,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.uid
+      });
+      fetchGiftCards();
+      alert(`Gift card generated: ${code}`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate gift card");
+    }
+  };
+
+  const handleGenerateCoupon = async (code: string, discount: number) => {
+    if (!code || !discount || discount <= 0) return alert("Please enter a valid code and discount");
+    
+    try {
+      const { setDoc, doc } = await import('firebase/firestore');
+      await setDoc(doc(db, 'coupons', code.toUpperCase()), {
+        discount, // percentage
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.uid
+      });
+      fetchGiftCards();
+      alert(`Coupon ${code.toUpperCase()} generated with ${discount}% discount!`);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate coupon");
     }
   };
 
@@ -515,7 +565,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="flex gap-2 md:gap-8 mb-8 overflow-x-auto pb-2 scrollbar-hide border-b border-brand-blue/5 dark:border-white/5 px-2">
           <button 
             className={`pb-4 text-sm uppercase tracking-widest font-black transition-colors whitespace-nowrap ${activeTab === 'overview' ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-brand-blue/50 dark:text-brand-beige/50 hover:text-brand-blue dark:hover:text-brand-beige'}`}
             onClick={() => setActiveTab('overview')}
@@ -545,6 +595,12 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('broadcast')}
           >
             Broadcast
+          </button>
+          <button 
+            className={`pb-4 text-sm uppercase tracking-widest font-black transition-colors whitespace-nowrap ${activeTab === 'giftcards' ? 'text-brand-gold border-b-2 border-brand-gold' : 'text-brand-blue/50 dark:text-brand-beige/50 hover:text-brand-blue dark:hover:text-brand-beige'}`}
+            onClick={() => setActiveTab('giftcards')}
+          >
+            Gift Cards
           </button>
         </div>
 
@@ -823,8 +879,6 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
-          </div>
-        )}
 
         {/* Add Product Modal */}
         {isProductModalOpen && (
@@ -982,7 +1036,129 @@ export default function AdminDashboard() {
               </form>
             </motion.div>
           )}
-        </div>
+
+            {activeTab === 'giftcards' && (
+              <div className="space-y-12">
+                {/* Gift Cards Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-white dark:bg-white/5 p-6 md:p-8 border border-brand-blue/10 dark:border-white/10 rounded-sm">
+                    <h3 className="text-lg md:text-xl font-serif text-brand-blue dark:text-brand-beige mb-6">Generate Gift Card</h3>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <input 
+                        type="number" 
+                        placeholder="Amount (₹)" 
+                        id="gcAmount"
+                        className="flex-1 bg-brand-blue/5 dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 px-6 py-4 rounded-sm text-brand-blue dark:text-brand-beige outline-none focus:border-brand-gold transition-colors"
+                      />
+                      <button 
+                        onClick={() => handleGenerateGiftCard(Number((document.getElementById('gcAmount') as HTMLInputElement).value))}
+                        className="bg-brand-gold text-white px-6 py-4 text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-blue transition-colors rounded-sm"
+                      >
+                        GENERATE
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-white/5 p-6 md:p-8 border border-brand-blue/10 dark:border-white/10 rounded-sm">
+                    <h3 className="text-lg md:text-xl font-serif text-brand-blue dark:text-brand-beige mb-6">Generate Coupon</h3>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <input 
+                          type="text" 
+                          placeholder="Coupon Code (e.g. NAV20)" 
+                          id="couponCode"
+                          className="flex-1 bg-brand-blue/5 dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 px-6 py-4 rounded-sm text-brand-blue dark:text-brand-beige outline-none focus:border-brand-gold transition-colors uppercase"
+                        />
+                        <input 
+                          type="number" 
+                          placeholder="Disc %" 
+                          id="couponDiscount"
+                          className="w-24 bg-brand-blue/5 dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 px-6 py-4 rounded-sm text-brand-blue dark:text-brand-beige outline-none focus:border-brand-gold transition-colors"
+                        />
+                      </div>
+                      <button 
+                        onClick={() => handleGenerateCoupon(
+                          (document.getElementById('couponCode') as HTMLInputElement).value,
+                          Number((document.getElementById('couponDiscount') as HTMLInputElement).value)
+                        )}
+                        className="w-full bg-brand-blue dark:bg-white dark:text-brand-blue text-white px-8 py-4 text-[9px] font-black uppercase tracking-[0.2em] hover:bg-brand-gold transition-colors rounded-sm"
+                      >
+                        GENERATE COUPON
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Gift Cards Table */}
+                  <div>
+                    <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-brand-blue/40 dark:text-brand-beige/40 mb-4">Recent Gift Cards</h4>
+                    <div className="bg-white dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 rounded-sm overflow-x-auto scrollbar-hide">
+                      <table className="w-full text-left">
+                        <thead className="bg-brand-blue/5 dark:bg-white/5 text-[10px] uppercase tracking-widest font-black text-brand-blue/60 dark:text-brand-beige/60">
+                          <tr>
+                            <th className="p-4">Code</th>
+                            <th className="p-4">Amount</th>
+                            <th className="p-4">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm text-brand-blue dark:text-brand-beige">
+                          {giftCards.length === 0 && (
+                            <tr><td colSpan={3} className="p-8 text-center opacity-50">No gift cards.</td></tr>
+                          )}
+                          {giftCards.slice(0, 10).map((gc) => (
+                            <tr key={gc.id} className="border-t border-brand-blue/10 dark:border-white/10">
+                              <td className="p-4 font-mono text-brand-gold font-bold uppercase">{gc.id}</td>
+                              <td className="p-4">₹{gc.amount.toLocaleString()}</td>
+                              <td className="p-4">
+                                <span className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm ${gc.isUsed ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
+                                  {gc.isUsed ? 'REDEEMED' : 'ACTIVE'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Coupons Table */}
+                  <div>
+                    <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-brand-blue/40 dark:text-brand-beige/40 mb-4">Active Coupons</h4>
+                    <div className="bg-white dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 rounded-sm overflow-x-auto scrollbar-hide">
+                      <table className="w-full text-left">
+                        <thead className="bg-brand-blue/5 dark:bg-white/5 text-[10px] uppercase tracking-widest font-black text-brand-blue/60 dark:text-brand-beige/60">
+                          <tr>
+                            <th className="p-4">Code</th>
+                            <th className="p-4">Discount</th>
+                            <th className="p-4">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-sm text-brand-blue dark:text-brand-beige">
+                          {coupons.length === 0 && (
+                            <tr><td colSpan={3} className="p-8 text-center opacity-50">No coupons.</td></tr>
+                          )}
+                          {coupons.map((c) => (
+                            <tr key={c.id} className="border-t border-brand-blue/10 dark:border-white/10">
+                              <td className="p-4 font-mono text-brand-gold font-bold uppercase">{c.id}</td>
+                              <td className="p-4 font-bold">{c.discount}% OFF</td>
+                              <td className="p-4">
+                                <span className={`px-2 py-1 text-[8px] font-black uppercase tracking-widest rounded-sm ${!c.isActive ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-green-500/10 text-green-500 border border-green-500/20'}`}>
+                                  {c.isActive ? 'ACTIVE' : 'EXPIRED'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    </div>
   );
 }

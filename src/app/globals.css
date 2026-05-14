@@ -10,8 +10,9 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
   --color-brand-blue: #0A1128;
-  --color-brand-gold: #D4AF37;
+  --color-brand-gold: #E5C05E;
   --color-brand-beige: #FAFAF7;
+
 }
 
 @layer base {

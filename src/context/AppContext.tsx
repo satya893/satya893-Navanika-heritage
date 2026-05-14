@@ -50,19 +50,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(email => email.trim().toLowerCase()) || [];
 
   useEffect(() => {
-    // Initial theme setup: check localStorage first, then fallback to false
+    // Initial theme and guest data setup
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('navanika-theme');
-      if (savedTheme === 'dark') {
-        setIsDarkMode(true);
-      } else if (savedTheme === 'light') {
-        setIsDarkMode(false);
-      } else {
-        // Default to light if no preference
-        setIsDarkMode(false);
+      if (savedTheme === 'dark') setIsDarkMode(true);
+      else if (savedTheme === 'light') setIsDarkMode(false);
+      
+      // Load guest data if no user is initially detected
+      if (!auth.currentUser) {
+        const savedWishlist = localStorage.getItem('navanika-wishlist');
+        if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+        
+        const savedCart = localStorage.getItem('navanika-cart');
+        if (savedCart) setCart(JSON.parse(savedCart));
       }
     }
   }, []);
+
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -132,42 +136,85 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToCart = async (product: Product, size?: string) => {
-    if (!user) { setIsAuthOpen(true); return; }
     const cartItemId = size ? `${product.id}_${size}` : product.id;
-    const cartRef = doc(db, 'users', user.uid, 'cart', cartItemId);
-    const cartSnap = await getDoc(cartRef);
-    if (cartSnap.exists()) {
-      await setDoc(cartRef, { ...cartSnap.data(), quantity: cartSnap.data().quantity + 1 }, { merge: true });
+    
+    if (user) {
+      const cartRef = doc(db, 'users', user.uid, 'cart', cartItemId);
+      const cartSnap = await getDoc(cartRef);
+      if (cartSnap.exists()) {
+        await setDoc(cartRef, { ...cartSnap.data(), quantity: cartSnap.data().quantity + 1 }, { merge: true });
+      } else {
+        await setDoc(cartRef, {
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image,
+          size: size || null,
+          addedAt: new Date().toISOString()
+        });
+      }
     } else {
-      await setDoc(cartRef, {
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        image: product.image,
-        size: size || null,
-        addedAt: new Date().toISOString()
-      });
+      // Handle Guest Cart
+      const newCart = [...cart];
+      const existingItem = newCart.find(item => item.id === cartItemId);
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        newCart.push({
+          id: cartItemId,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image,
+          size: size || null,
+          addedAt: new Date().toISOString()
+        });
+      }
+      setCart(newCart);
+      localStorage.setItem('navanika-cart', JSON.stringify(newCart));
     }
     setIsCartOpen(true);
   };
 
+
   const toggleWishlist = async (product: Product) => {
-    if (!user) { setIsAuthOpen(true); return; }
-    const wishlistRef = doc(db, 'users', user.uid, 'wishlist', product.id);
-    const wishlistSnap = await getDoc(wishlistRef);
-    if (wishlistSnap.exists()) {
-      await deleteDoc(wishlistRef);
+    if (user) {
+      const wishlistRef = doc(db, 'users', user.uid, 'wishlist', product.id);
+      const wishlistSnap = await getDoc(wishlistRef);
+      if (wishlistSnap.exists()) {
+        await deleteDoc(wishlistRef);
+      } else {
+        await setDoc(wishlistRef, {
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          addedAt: new Date().toISOString()
+        });
+      }
     } else {
-      await setDoc(wishlistRef, {
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        addedAt: new Date().toISOString()
-      });
+      // Handle Guest Wishlist
+      const newWishlist = [...wishlist];
+      const index = newWishlist.findIndex(item => item.id === product.id || item.productId === product.id);
+      if (index > -1) {
+        newWishlist.splice(index, 1);
+      } else {
+        newWishlist.push({
+          id: product.id,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          addedAt: new Date().toISOString()
+        });
+      }
+      setWishlist(newWishlist);
+      localStorage.setItem('navanika-wishlist', JSON.stringify(newWishlist));
     }
   };
+
 
   return (
     <AppContext.Provider value={{

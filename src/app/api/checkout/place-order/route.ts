@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { dbAdmin, sendAdminNotificationServer } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 type ShippingInfo = {
   fullName: string;
@@ -23,15 +24,17 @@ type OrderItem = {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, items, shipping, paymentId, paymentMethod } = body as {
+    const { userId, items, shipping, paymentId, paymentMethod, walletUsed = 0, couponCode } = body as {
       userId: string;
       items: OrderItem[];
       shipping: ShippingInfo;
       paymentId: string;
       paymentMethod: 'online' | 'cod' | 'upi';
+      walletUsed?: number;
+      couponCode?: string;
     };
 
-    console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod });
+    console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
 
     if (!userId || !Array.isArray(items) || items.length === 0) {
       console.error('❌ [place-order] Invalid request - missing userId or items');
@@ -40,15 +43,39 @@ export async function POST(request: Request) {
 
     // Transaction: decrement stock + create order atomically
     const orderRef = dbAdmin.collection('orders').doc();
+    const userRef = dbAdmin.collection('users').doc(userId);
     console.log('🔵 [place-order] Creating order with ID:', orderRef.id);
 
     const stockUpdates: any[] = [];
+    let couponDiscountAmount = 0;
+    let appliedCouponData: any = null;
+
     await dbAdmin.runTransaction(async (tx) => {
-      // 1) Read all product documents first (Firestore requirement: all reads before writes)
+      // 1) Read all product documents AND user document AND coupon first
       const productRefs = items.map(item => dbAdmin.collection('products').doc(item.productId));
       const productSnaps = await Promise.all(productRefs.map(ref => tx.get(ref)));
+      const userSnap = await tx.get(userRef);
 
-      // 2) Verify stock and prepare updates
+      // Verify coupon if provided
+      if (couponCode) {
+        const couponRef = dbAdmin.collection('coupons').doc(couponCode.toUpperCase());
+        const couponSnap = await tx.get(couponRef);
+        if (couponSnap.exists && couponSnap.data()?.isActive) {
+          appliedCouponData = couponSnap.data();
+        }
+      }
+
+      // 2) Verify wallet balance if used
+      if (walletUsed > 0) {
+        if (!userSnap.exists) throw new Error('User not found');
+        const userData = userSnap.data();
+        const currentBalance = userData?.walletBalance || 0;
+        if (currentBalance < walletUsed) {
+          throw new Error('Insufficient wallet balance');
+        }
+      }
+
+      // 3) Verify stock and prepare updates
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const qty = Number(item.quantity);
@@ -74,14 +101,28 @@ export async function POST(request: Request) {
         stockUpdates.push({ ref: productRefs[i], newStock: currentStock - qty });
       }
 
-      // 3) Perform all writes
+      // 4) Perform all writes
       for (const update of stockUpdates) {
         tx.update(update.ref, { stock: update.newStock });
       }
 
-      // 4) Create order with Tax and Shipping
+      // Deduct wallet balance
+      if (walletUsed > 0) {
+        tx.update(userRef, { 
+          walletBalance: FieldValue.increment(-walletUsed) 
+        });
+      }
+
+      // 5) Create order with Tax, Shipping and Coupon
       const subtotal = items.reduce((acc, item) => acc + Number(item.price) * Number(item.quantity), 0);
-      const tax = subtotal * 0.05; // 5% GST
+      
+      // Calculate Coupon Discount
+      if (appliedCouponData) {
+        couponDiscountAmount = Math.round((subtotal * appliedCouponData.discount) / 100);
+      }
+
+      const discountedSubtotal = subtotal - couponDiscountAmount;
+      const tax = discountedSubtotal * 0.05; // 5% GST
       
       let shippingFee = 99;
       const pinPrefix = shipping.pincode.substring(0, 2);
@@ -90,10 +131,13 @@ export async function POST(request: Request) {
       
       if (subtotal > 5000) shippingFee = 0; // Free shipping threshold
 
-      const finalTotal = subtotal + tax + shippingFee;
+      const finalTotal = discountedSubtotal + tax + shippingFee;
+      const paidAmount = finalTotal - walletUsed;
       
-      // Keep order as pending for online until Razorpay webhook confirms.
-      const status = paymentMethod === 'cod' ? 'confirmed' : 
+      // If fully paid by wallet, status is confirmed. 
+      // Otherwise, depend on payment method.
+      const status = paidAmount <= 0 ? 'confirmed' :
+                     paymentMethod === 'cod' ? 'confirmed' : 
                      paymentMethod === 'upi' ? 'pending_verification' : 'pending';
 
       console.log('🔵 [place-order] Setting order status to:', status);
@@ -103,11 +147,16 @@ export async function POST(request: Request) {
         userId,
         items,
         subtotal,
+        discount: couponDiscountAmount,
+        couponCode: couponCode || null,
         tax,
         shippingFee,
         total: finalTotal,
+        walletUsed,
+        paidAmount: Math.max(0, paidAmount),
         shipping,
         paymentId,
+        paymentMethod,
         status,
         createdAt: new Date().toISOString(),
       });

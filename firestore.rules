@@ -2,6 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
     function isAuthenticated() { 
       return request.auth != null; 
     }
@@ -11,107 +15,77 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-
-    match /users/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-      
-      match /cart/{itemId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
-      
-      match /wishlist/{itemId} {
-        allow read, write: if isOwner(userId) || isAdmin();
-      }
-    }
-
-    match /orders/{orderId} {
-      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.size() < 10;
-      allow update, delete: if isAdmin(); 
-    }
-
-    // Reviews collection
-    match /reviews/{reviewId} {
-      allow read: if true;
-      allow create: if request.auth != null &&
-        request.resource.data.keys().hasAll(['productId', 'userId', 'rating', 'comment']) &&
-        request.resource.data.userId == request.auth.uid &&
-        (request.resource.data.rating >= 1 && request.resource.data.rating <= 5);
-      allow update, delete: if resource.data.userId == request.auth.uid || isAdmin();
-    }
-
-    match /products/{productId} {
-      allow read, list: if true;
-      allow write: if isAdmin();
-    }
-    
-    // Prevent expensive queries
-    match /{document=**} {
-      allow read, write: if request.query.limit == null || request.query.limit <= 50;
-    }
-  }
-}
-    // ===============================================================
-    // Domain Validators
-    // ===============================================================
-    function isValidUser(data) {
-      return hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'role', 'createdAt']) &&
-             data.uid == request.auth.uid &&
-             isValidEmail(data.email) &&
-             (data.role == 'user' || data.role == 'admin');
-    }
-
-    function isValidCartItem(data) {
-      return hasOnlyAllowedFields(['productId', 'name', 'price', 'quantity', 'size', 'image', 'addedAt']) &&
-             data.productId is string &&
-             data.name is string &&
-             data.price is number &&
-             data.quantity is int &&
-             data.quantity > 0;
-    }
-
-    function isValidWishlistItem(data) {
-      return hasOnlyAllowedFields(['productId', 'name', 'price', 'image', 'addedAt']) &&
-             data.productId is string &&
-             data.name is string;
+      return isAuthenticated() && (
+        request.auth.token.email == 'dubeysatym2@gmail.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'moderator'))
+      );
     }
 
     // ===============================================================
-    // Rules
-    function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
+    // Collection Rules
+    // ===============================================================
 
-    // ===============================================================
-    // Rules
-    // ===============================================================
+    // Users Collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin(); 
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if (isOwner(userId) && (request.resource.data.role == resource.data.role || !('role' in request.resource.data))) || isAdmin();
       allow delete: if isAdmin();
-
+      
+      // Cart Sub-collection
       match /cart/{itemId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create, update: if isOwner(userId) && isValidCartItem(request.resource.data);
-        allow delete: if isOwner(userId) || isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+      
+      // Wishlist Sub-collection
+      match /wishlist/{itemId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
 
-      match /wishlist/{itemId} {
-        allow read: if isOwner(userId) || isAdmin();
-        allow create, update: if isOwner(userId) && isValidWishlistItem(request.resource.data);
-        allow delete: if isOwner(userId) || isAdmin();
+      // Notifications Sub-collection
+      match /notifications/{notifId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
+    // Orders Collection
     match /orders/{orderId} {
       allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAdmin();
-      allow delete: if isAdmin();
+      allow update, delete: if isAdmin(); 
     }
 
-    // Add reviews collection\n    match /reviews/{reviewId} {\n      allow read: if true;\n      allow create: if request.auth != null &&\n        request.resource.data.keys().hasAll(['productId', 'userId', 'rating', 'comment']) &&\n        request.resource.data.userId == request.auth.uid &&\n        request.resource.data.rating >= 1 && request.resource.data.rating <= 5;\n      allow update, delete: if resource.data.userId == request.auth.uid || isAdmin();\n    }\n\n    match /products/{productId} {\n      allow read: if true;\n      allow create, update, delete: if isAdmin();\n      allow list: if request.query.limit <= 50; // Prevent expensive queries\n    }\n\n    match /orders/{orderId} {\n      allow read: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();\n      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.size() < 10;\n      allow update: if isAdmin();\n      allow delete: if isAdmin();\n    }\n  }\n}
+    // Reviews Collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+    }
+
+    // Products Collection
+    match /products/{productId} {
+      allow read, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Admin Notifications Collection
+    match /admin_notifications/{notificationId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Gift Cards Collection
+    match /giftCards/{cardId} {
+      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+    }
+
+    // Coupons Collection
+    match /coupons/{couponId} {
+      allow write: if isAdmin();
+      allow read: if isAuthenticated();
+    }
+
+  }
+}

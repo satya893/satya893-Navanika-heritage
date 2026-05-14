@@ -6,13 +6,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { UserNotification, markAdminAsRead } from '../lib/notifications';
+import { useApp } from '../context/AppContext';
 
 export default function AdminNotificationBell() {
+  const { userData } = useApp();
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    if (userData?.role !== 'admin' && userData?.role !== 'moderator') return;
+
     const q = query(
       collection(db, 'admin_notifications'),
       orderBy('createdAt', 'desc'),

@@ -14,6 +14,7 @@ import { useApp } from '../context/AppContext';
 import { logout } from '../firebase';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import MobileBottomNav from './MobileBottomNav';
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const {
@@ -53,10 +54,11 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         isAdmin={isAdmin}
       />
 
-      <main>{children}</main>
+      <main className="pb-20 lg:pb-0">{children}</main>
+      <MobileBottomNav />
 
       {/* Floating Actions */}
-      <div className="fixed bottom-8 right-8 flex flex-col gap-4 z-40">
+      <div className="fixed bottom-24 md:bottom-32 lg:bottom-8 right-6 lg:right-8 flex flex-col gap-4 z-40">
         <button 
           onClick={() => setIsGenOpen(true)}
           className="w-14 h-14 bg-brand-gold text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
@@ -95,7 +97,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
               <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-brand-gold shadow-lg bg-white shrink-0">
                 <Image 
                   src="/logo.png" 
-                  alt="Navanika Logo" 
+                  alt="Navanika Heritage - Authentic Indian Craftsmanship" 
                   fill
                   sizes="64px"
                   className="object-contain p-1"

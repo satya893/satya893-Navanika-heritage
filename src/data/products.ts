@@ -7,6 +7,7 @@ export interface Product {
   price: number;
   category: string;
   image: string;
+  secondaryImage?: string;
   description?: string;
   isTrending?: boolean;
   stock?: number;
@@ -36,6 +37,7 @@ const generateProducts = (category: string, count: number, startId: number): Pro
       price: (((i * 13) % 15) + 1) * 100,
       category,
       image: `https://picsum.photos/seed/navanika-${category.toLowerCase()}-${id}/800/1200`,
+      secondaryImage: `https://picsum.photos/seed/navanika-detail-${category.toLowerCase()}-${id}/800/1200`,
       description: `A masterpiece of ${category.toLowerCase()} wear, this ${adj.toLowerCase()} ${noun.toLowerCase()} is a testament to Navanika's commitment to heritage and elegance. Crafted with precision and passion.`,
       isTrending: (i % 3 === 0),
       stock: 100,
@@ -44,6 +46,7 @@ const generateProducts = (category: string, count: number, startId: number): Pro
   }
   return products;
 };
+
 
 export const ALL_PRODUCTS: Product[] = [
   ...generateProducts('Sarees', 60, 100),

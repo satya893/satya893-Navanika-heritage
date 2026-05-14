@@ -27,11 +27,17 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   };
 
   const handleGoogle = async () => {
-    setLoading(true); setError('');
+    setLoading(true); 
+    setError('');
     try {
       await signInWithGoogle();
       onClose();
     } catch (e: any) {
+      // Don't show error if user just closed the popup
+      if (e.code === 'auth/popup-closed-by-user') {
+        setLoading(false);
+        return;
+      }
       setError(e.message || 'Google sign-in failed.');
     } finally {
       setLoading(false);

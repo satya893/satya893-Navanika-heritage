@@ -14,16 +14,36 @@ export default function SearchFilters({ onSearch, setIsSearching }: SearchFilter
   const [category, setCategory] = useState('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   const categories = ['all', 'Sarees', 'Lehengas', 'Jewelry', 'Artisan'];
 
   useEffect(() => {
+    if (query.length > 1) {
+      const fetchSuggestions = async () => {
+        try {
+          const res = await fetch(`/api/search?q=${query}&limit=5`);
+          const data = await res.json();
+          setSuggestions(data.slice(0, 5));
+        } catch (error) {
+          console.error('Suggestions fetch failed:', error);
+        }
+      };
+      const timer = setTimeout(fetchSuggestions, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSuggestions([]);
+    }
+  }, [query]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       handleSearch();
-    }, 500);
+    }, 800);
 
     return () => clearTimeout(timer);
   }, [query, category, priceRange]);
+
 
   const handleSearch = async () => {
     if (!query && category === 'all' && priceRange.min === 0 && priceRange.max === 100000) {
@@ -61,7 +81,8 @@ export default function SearchFilters({ onSearch, setIsSearching }: SearchFilter
             placeholder="Search for a masterpiece (e.g., Silk Saree)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-white dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 py-4 pl-12 pr-4 rounded-sm outline-none focus:border-brand-gold transition-all font-serif text-lg text-brand-blue dark:text-brand-beige"
+            onFocus={() => query.length > 1 && setIsFilterOpen(false)}
+            className="w-full bg-white dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 py-4 pl-12 pr-12 rounded-sm outline-none focus:border-brand-gold transition-all font-serif text-lg text-brand-blue dark:text-brand-beige"
           />
           {query && (
             <button 
@@ -71,7 +92,49 @@ export default function SearchFilters({ onSearch, setIsSearching }: SearchFilter
               <X size={18} />
             </button>
           )}
+
+          {/* Auto-suggestions */}
+          <AnimatePresence>
+            {query.length > 1 && suggestions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-brand-blue border border-brand-gold/20 shadow-2xl z-[100] max-h-96 overflow-y-auto scrollbar-hide"
+              >
+                <div className="p-2">
+                  <p className="text-[9px] uppercase tracking-[0.3em] font-black text-brand-gold/50 px-4 py-3 border-b border-brand-gold/10 mb-2">Suggestions</p>
+                  {suggestions.map((item: any) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setQuery(item.name);
+                        setSuggestions([]);
+                        onSearch([item]);
+                      }}
+                      className="w-full flex items-center gap-4 p-3 hover:bg-brand-gold/5 transition-colors group text-left"
+                    >
+                      <div className="relative w-12 h-16 bg-brand-blue/5 overflow-hidden shrink-0">
+                        <img src={item.image} alt={item.name} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-serif text-brand-blue dark:text-brand-beige group-hover:text-brand-gold transition-colors">{item.name}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-brand-gold/60">{item.category}</span>
+                      </div>
+                    </button>
+                  ))}
+                  <button 
+                    onClick={handleSearch}
+                    className="w-full py-4 text-[10px] uppercase tracking-[0.4em] font-black text-brand-gold hover:bg-brand-gold hover:text-white transition-all border-t border-brand-gold/10 mt-2"
+                  >
+                    View all results for "{query}"
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
 
         {/* Filter Toggle */}
         <button 
