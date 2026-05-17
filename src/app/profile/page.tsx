@@ -12,6 +12,7 @@ import {
 import { getUserOrders, Order } from '../../lib/orders';
 import { logout } from '../../firebase';
 import { useApp } from '../../context/AppContext';
+import { toast } from 'sonner';
 
 const STATUS_COLORS: Record<string, string> = {
   confirmed: 'text-green-500 bg-green-500/10 border-green-500/30',
@@ -105,10 +106,10 @@ function ProfilePageInner() {
         const amount = gcSnap.data().amount;
         await updateDoc(gcRef, { isUsed: true, usedBy: user.uid, usedAt: new Date().toISOString() });
         await updateDoc(doc(db, 'users', user.uid), { walletBalance: increment(amount) });
-        alert(`Successfully redeemed ₹${amount}!`);
+        toast.success(`Successfully redeemed ₹${amount}!`);
         setGiftCardCode('');
       } else {
-        alert("Invalid or already used gift card code.");
+        toast.error("Invalid or already used gift card code.");
       }
     } catch (err) {
       console.error("Redemption failed", err);

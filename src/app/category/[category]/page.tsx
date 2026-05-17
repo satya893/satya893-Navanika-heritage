@@ -39,9 +39,14 @@ export default function CategoryPage() {
       </div>
       
       {loading ? (
-        <div className="flex justify-center py-32">
-          <div className="animate-spin w-8 h-8 border-2 border-brand-gold border-t-transparent rounded-full" />
-        </div>
+        <ProductGrid 
+          products={[]} 
+          onAddToCart={addToCart} 
+          onToggleWishlist={toggleWishlist}
+          onProductClick={(product) => router.push(`/product/${product.id}`)}
+          wishlist={wishlist}
+          isLoading={true}
+        />
       ) : (
         <ProductGrid 
           products={products} 

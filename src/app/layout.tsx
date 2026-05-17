@@ -5,6 +5,7 @@ import { AppProvider } from "../context/AppContext";
 import GlobalLayout from "../components/GlobalLayout";
 import "./globals.css";
 import SmoothScroll from "../components/SmoothScroll";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-serif', style: ['normal', 'italic'] });
@@ -42,6 +43,12 @@ export default function RootLayout({
             </GlobalLayout>
           </SmoothScroll>
         </AppProvider>
+        <Toaster 
+          position="bottom-right" 
+          toastOptions={{
+            style: { background: '#0A1128', color: '#E5C05E', border: '1px solid #E5C05E' }
+          }} 
+        />
         <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>

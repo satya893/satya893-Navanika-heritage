@@ -10,6 +10,7 @@ import { Package, ShoppingBag, Users, TrendingUp, Plus, X, Edit2, Trash2, Send, 
 import { motion } from 'motion/react';
 import { sendUserNotification, broadcastNotification } from '../../lib/notifications';
 import AdminNotificationBell from '../../components/AdminNotificationBell';
+import { toast } from 'sonner';
 
 export default function AdminDashboard() {
   const { user, userData } = useApp();
@@ -130,9 +131,10 @@ export default function AdminDashboard() {
       setIsProductModalOpen(false);
       setEditingProductId(null);
       setNewProduct({ name: '', price: '', category: 'Sarees', description: '', image: '', isTrending: false, stock: '10' });
+      toast.success("Product saved successfully!");
     } catch (error) {
       console.error("Error saving product:", error);
-      alert("Failed to save product. Make sure you are an admin!");
+      toast.error("Failed to save product. Make sure you are an admin!");
     } finally {
       setIsSubmitting(false);
     }
@@ -143,9 +145,10 @@ export default function AdminDashboard() {
     try {
       await deleteDoc(doc(db, 'products', id));
       setProducts(products.filter(p => p.id !== id));
+      toast.success("Product deleted.");
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Failed to delete product.");
+      toast.error("Failed to delete product.");
     }
   };
 
@@ -186,9 +189,10 @@ export default function AdminDashboard() {
           }
         })
       });
+      toast.success("Order status updated.");
     } catch (error) {
       console.error("Error updating order:", error);
-      alert("Failed to update order status.");
+      toast.error("Failed to update order status.");
     }
   };
 
@@ -216,7 +220,10 @@ export default function AdminDashboard() {
   };
 
   const handleBulkStockUpdate = async () => {
-    if (Object.keys(bulkStock).length === 0) return alert("No changes to update");
+    if (Object.keys(bulkStock).length === 0) {
+      toast.info("No changes to update");
+      return;
+    }
     setIsBulkUpdating(true);
     try {
       const promises = Object.entries(bulkStock).map(([id, stock]) => 
@@ -225,10 +232,10 @@ export default function AdminDashboard() {
       await Promise.all(promises);
       setProducts(products.map(p => bulkStock[p.id] !== undefined ? { ...p, stock: bulkStock[p.id] } : p));
       setBulkStock({});
-      alert("Bulk stock updated successfully!");
+      toast.success("Bulk stock updated successfully!");
     } catch (err) {
       console.error(err);
-      alert("Failed to update bulk stock.");
+      toast.error("Failed to update bulk stock.");
     } finally {
       setIsBulkUpdating(false);
     }
@@ -274,13 +281,13 @@ export default function AdminDashboard() {
           
           if (!notifyRes.ok) {
             console.error("Failed to send cancellation email");
-            alert("Order approved, but notification email could not be sent. Please notify the customer manually.");
+            toast.warning("Order approved, but notification email could not be sent. Please notify the customer manually.");
           } else {
             console.log("[ADMIN] Cancellation email sent successfully");
           }
         } else {
           console.warn("[ADMIN] No recipient email found for order", orderId);
-          alert("Order approved, but no email address was found for the customer. Please notify them via phone.");
+          toast.warning("Order approved, but no email address was found for the customer. Please notify them via phone.");
         }
 
         // Send In-App Notification
@@ -328,10 +335,10 @@ export default function AdminDashboard() {
         };
       }));
 
-      alert(`Request ${decision} successfully.`);
+      toast.success(`Request ${decision} successfully.`);
     } catch (err) {
       console.error(err);
-      alert("Failed to process request.");
+      toast.error("Failed to process request.");
     }
   };
 
@@ -340,15 +347,19 @@ export default function AdminDashboard() {
     try {
       await updateDoc(doc(db, 'users', userId), { role: newRole });
       setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      toast.success(`User role updated to ${newRole}`);
     } catch (error) {
       console.error("Error updating user role:", error);
-      alert("Failed to update user role.");
+      toast.error("Failed to update user role.");
     }
   };
 
   const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!broadcast.title || !broadcast.message) return alert("Title and message required");
+    if (!broadcast.title || !broadcast.message) {
+      toast.error("Title and message required");
+      return;
+    }
     
     setSendingBroadcast(true);
     try {
@@ -370,7 +381,7 @@ export default function AdminDashboard() {
       });
 
       if (res.ok) {
-        alert(broadcast.targetUser === 'all' ? "Broadcast sent successfully!" : "Notification sent to user!");
+        toast.success(broadcast.targetUser === 'all' ? "Broadcast sent successfully!" : "Notification sent to user!");
       } else {
         const data = await res.json();
         throw new Error(data.error || "Failed to send notification");
@@ -379,14 +390,17 @@ export default function AdminDashboard() {
       setBroadcast({ title: '', message: '', link: '', targetUser: 'all', type: 'offer' });
     } catch (err: any) {
       console.error(err);
-      alert("Failed to send notification");
+      toast.error("Failed to send notification");
     } finally {
       setSendingBroadcast(false);
     }
   };
 
   const handleGenerateGiftCard = async (amount: number) => {
-    if (!amount || amount <= 0) return alert("Please enter a valid amount");
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
     const code = `NAV-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
     try {
@@ -398,15 +412,18 @@ export default function AdminDashboard() {
         createdBy: user?.uid
       });
       fetchGiftCards();
-      alert(`Gift card generated: ${code}`);
+      toast.success(`Gift card generated: ${code}`);
     } catch (err) {
       console.error(err);
-      alert("Failed to generate gift card");
+      toast.error("Failed to generate gift card");
     }
   };
 
   const handleGenerateCoupon = async (code: string, discount: number) => {
-    if (!code || !discount || discount <= 0) return alert("Please enter a valid code and discount");
+    if (!code || !discount || discount <= 0) {
+      toast.error("Please enter a valid code and discount");
+      return;
+    }
     
     try {
       const { setDoc, doc } = await import('firebase/firestore');
@@ -417,10 +434,10 @@ export default function AdminDashboard() {
         createdBy: user?.uid
       });
       fetchGiftCards();
-      alert(`Coupon ${code.toUpperCase()} generated with ${discount}% discount!`);
+      toast.success(`Coupon ${code.toUpperCase()} generated with ${discount}% discount!`);
     } catch (err) {
       console.error(err);
-      alert("Failed to generate coupon");
+      toast.error("Failed to generate coupon");
     }
   };
 

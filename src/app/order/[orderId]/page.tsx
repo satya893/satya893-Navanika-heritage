@@ -11,6 +11,7 @@ import { Order } from '../../../lib/orders';
 import { updateDoc, serverTimestamp, increment } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
 
 export default function OrderConfirmationPage() {
   const params = useParams();
@@ -43,7 +44,10 @@ export default function OrderConfirmationPage() {
   }, [orderId]);
 
   const handleCancelOrder = async () => {
-    if (!cancelReason.trim()) return alert("Please provide a reason for cancellation.");
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation.");
+      return;
+    }
     setCancelling(true);
     try {
       const res = await fetch('/api/order/action', {
@@ -69,17 +73,20 @@ export default function OrderConfirmationPage() {
       };
       setOrder(prev => prev ? { ...prev, status: 'cancellation_pending', cancellationRequest: requestData as any } : null);
       setShowCancelModal(false);
-      alert("Your cancellation request has been accepted. You will get an update soon.");
+      toast.success("Your cancellation request has been accepted. You will get an update soon.");
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to cancel order.");
+      toast.error(err.message || "Failed to cancel order.");
     } finally {
       setCancelling(false);
     }
   };
 
   const handleReturnRequest = async () => {
-    if (!returnReason.trim()) return alert("Please provide a reason.");
+    if (!returnReason.trim()) {
+      toast.error("Please provide a reason.");
+      return;
+    }
     setReturning(true);
     try {
       const res = await fetch('/api/order/action', {
@@ -107,10 +114,10 @@ export default function OrderConfirmationPage() {
       
       setOrder(prev => prev ? { ...prev, returnRequest: requestData as any } : null);
       setShowReturnModal(false);
-      alert("Your request has been submitted for review.");
+      toast.success("Your request has been submitted for review.");
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to submit request.");
+      toast.error(err.message || "Failed to submit request.");
     } finally {
       setReturning(false);
     }

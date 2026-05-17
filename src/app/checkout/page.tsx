@@ -4,8 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, Phone, CheckCircle, CreditCard, Lock, ChevronRight, ArrowLeft, Package, Smartphone, X } from 'lucide-react';
+import { MapPin, Phone, CheckCircle, CreditCard, Lock, ChevronRight, ArrowLeft, Package, Smartphone, X, Loader2 } from 'lucide-react';
 import { ShippingInfo, OrderItem } from '../../lib/orders';
+import { toast } from 'sonner';
 
 import { useApp } from '../../context/AppContext';
 
@@ -153,13 +154,13 @@ export default function CheckoutPage() {
       const data = await res.json();
       if (res.ok) {
         setAppliedCoupon(data);
-        alert(`Coupon applied! You got ${data.discount}% off.`);
+        toast.success(`Coupon applied! You got ${data.discount}% off.`);
       } else {
-        alert(data.error || 'Invalid coupon code');
+        toast.error(data.error || 'Invalid coupon code');
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to validate coupon');
+      toast.error('Failed to validate coupon');
     } finally {
       setIsValidatingCoupon(false);
     }
@@ -223,7 +224,7 @@ export default function CheckoutPage() {
       if (!res.ok) {
         const errorMsg = data?.error || 'Error processing your COD order';
         console.error('❌ Order placement failed:', errorMsg);
-        alert(errorMsg);
+        toast.error(errorMsg);
         setStep('Review');
         setPaying(false);
         return;
@@ -248,7 +249,7 @@ export default function CheckoutPage() {
     } catch (err) {
       console.error('❌ COD Error:', err);
       const errorMsg = err instanceof Error ? err.message : String(err);
-      alert("Error processing your COD order: " + errorMsg);
+      toast.error("Error processing your COD order: " + errorMsg);
       setStep('Review');
       setPaying(false);
     }
@@ -269,7 +270,7 @@ export default function CheckoutPage() {
 
   const handleUPIOrder = async () => {
     if (!utr) {
-      alert("Please enter the Transaction ID / UTR provided by GPay");
+      toast.error("Please enter the Transaction ID / UTR provided by GPay");
       return;
     }
 
@@ -300,7 +301,7 @@ export default function CheckoutPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        alert(data?.error || 'Error placing your order');
+        toast.error(data?.error || 'Error placing your order');
         setPaying(false);
         return;
       }
@@ -315,7 +316,7 @@ export default function CheckoutPage() {
       router.push(`/order/${data.orderId}`);
     } catch (err) {
       console.error(err);
-      alert("Error processing UPI order");
+      toast.error("Error processing UPI order");
       setPaying(false);
     }
   };
@@ -402,7 +403,7 @@ export default function CheckoutPage() {
 
               const data = await res.json();
               if (!res.ok) {
-                alert(data?.error || 'Error placing your order');
+                toast.error(data?.error || 'Error placing your order');
                 setStep('Review');
                 setPaying(false);
                 return;
@@ -424,13 +425,13 @@ export default function CheckoutPage() {
 
 
             } else {
-              alert("Payment verification failed!");
+              toast.error("Payment verification failed!");
               setStep('Review');
               setPaying(false);
             }
           } catch (err) {
             console.error("Verification error", err);
-            alert("Error verifying payment");
+            toast.error("Error verifying payment");
             setStep('Review');
             setPaying(false);
           }
@@ -440,7 +441,7 @@ export default function CheckoutPage() {
       const rzp1 = new (window as any).Razorpay(options);
       rzp1.on('payment.failed', function (response: any) {
         console.error("Payment Failed", response.error);
-        alert(response.error.description || "Payment failed");
+        toast.error(response.error.description || "Payment failed");
         setStep('Review');
         setPaying(false);
       });
@@ -449,7 +450,7 @@ export default function CheckoutPage() {
 
     } catch (err) {
       console.error(err);
-      alert("Error initiating payment");
+      toast.error("Error initiating payment");
       setStep('Review');
       setPaying(false);
     }
@@ -641,9 +642,9 @@ export default function CheckoutPage() {
                 <button 
                   onClick={handleValidateCoupon}
                   disabled={isValidatingCoupon || !couponCode}
-                  className="bg-brand-blue text-white px-6 py-3 text-[9px] font-black uppercase tracking-widest hover:bg-brand-gold transition-colors rounded-sm disabled:opacity-50"
+                  className="bg-brand-blue text-white px-6 py-3 text-[9px] font-black uppercase tracking-widest hover:bg-brand-gold transition-colors rounded-sm disabled:opacity-50 flex items-center gap-2"
                 >
-                  {isValidatingCoupon ? '...' : 'Apply'}
+                  {isValidatingCoupon ? <Loader2 size={12} className="animate-spin" /> : 'Apply'}
                 </button>
               </div>
               {appliedCoupon && (
@@ -780,17 +781,19 @@ export default function CheckoutPage() {
                 {remainingTotal === 0 ? (
                   <button 
                     onClick={() => handleCOD()}
-                    className="w-full bg-brand-gold text-white py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-brand-blue transition-all shadow-xl rounded-sm"
+                    disabled={paying}
+                    className="w-full bg-brand-gold text-white py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-brand-blue transition-all shadow-xl rounded-sm disabled:opacity-70 flex justify-center items-center gap-2"
                   >
-                    Confirm Order with Wallet <ChevronRight size={14} className="inline ml-2" />
+                    {paying ? <Loader2 size={14} className="animate-spin" /> : <>Confirm Order with Wallet <ChevronRight size={14} /></>}
                   </button>
                 ) : (
                   <>
                     <button 
                       onClick={paymentMethod === 'online' ? handlePayment : paymentMethod === 'upi' ? handleGPay : handleCOD}
-                      className="w-full bg-brand-gold text-white py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-brand-blue dark:hover:text-white dark:hover:text-brand-blue transition-all flex items-center justify-center gap-2 shadow-xl rounded-sm"
+                      disabled={paying}
+                      className="w-full bg-brand-gold text-white py-5 text-[10px] font-black uppercase tracking-[0.4em] hover:bg-brand-blue dark:hover:text-white dark:hover:text-brand-blue transition-all flex items-center justify-center gap-2 shadow-xl rounded-sm disabled:opacity-70"
                     >
-                      {paymentMethod === 'online' ? (
+                      {paying ? <Loader2 size={14} className="animate-spin" /> : paymentMethod === 'online' ? (
                         <>Pay ₹{remainingTotal.toLocaleString()} Securely <Lock size={14} /></>
                       ) : paymentMethod === 'upi' ? (
                         <>{isMobile ? `Pay ₹${remainingTotal.toLocaleString()} with GPay` : `Pay ₹${remainingTotal.toLocaleString()} via UPI QR`} <Smartphone size={14} /></>

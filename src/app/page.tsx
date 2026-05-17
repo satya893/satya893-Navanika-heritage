@@ -74,9 +74,14 @@ export default function HomePage() {
         </div>
         
         {(loading || isSearching) ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin w-8 h-8 border-2 border-brand-gold border-t-transparent rounded-full" />
-          </div>
+          <ProductGrid 
+            products={[]} 
+            onAddToCart={addToCart} 
+            onToggleWishlist={toggleWishlist}
+            onProductClick={(product) => router.push(`/product/${product.id}`)}
+            wishlist={wishlist}
+            isLoading={true}
+          />
         ) : (
           <>
             {searchResults.length > 0 ? (

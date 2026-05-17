@@ -10,10 +10,28 @@ interface ProductGridProps {
   onToggleWishlist: (product: Product) => void;
   onProductClick: (product: Product) => void;
   wishlist: any[];
+  isLoading?: boolean;
 }
 
-export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist }: ProductGridProps) {
+export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
   const router = useRouter();
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="relative aspect-[4/5] bg-brand-blue/10 dark:bg-white/10 mb-8 rounded-sm" />
+            <div className="text-center px-4 space-y-4 flex flex-col items-center">
+              <div className="h-3 w-1/3 bg-[#9E7300]/20 dark:bg-brand-gold/20 rounded-sm" />
+              <div className="h-6 w-3/4 bg-brand-blue/10 dark:bg-white/10 rounded-sm" />
+              <div className="h-4 w-1/4 bg-brand-blue/10 dark:bg-white/10 rounded-sm" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
@@ -25,7 +43,7 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
             className="group cursor-pointer relative"
             onClick={() => router.push(`/product/${product.id}`)}
           >
-            <div className="relative aspect-[4/5] overflow-hidden bg-brand-blue/5 dark:bg-white/5 mb-8 transition-all duration-1000 shadow-sm border border-brand-blue/5 dark:border-white/5 group">
+            <div className="relative aspect-[4/5] overflow-hidden bg-brand-blue/5 dark:bg-white/5 mb-8 transition-all duration-1000 shadow-sm border border-brand-blue/5 dark:border-white/5 group rounded-sm">
               <Image 
                 src={product.image} 
                 fill
@@ -56,14 +74,14 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
                 onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
                 className="absolute bottom-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-10"
               >
-                 <div className="w-12 h-12 bg-brand-gold text-white flex items-center justify-center shadow-xl"><Plus size={20} /></div>
+                 <div className="w-12 h-12 bg-brand-gold text-white flex items-center justify-center shadow-xl rounded-sm"><Plus size={20} /></div>
               </div>
             </div>
 
             <div className="text-center px-4">
-              <p className="text-brand-gold text-[9px] md:text-[10px] font-medium uppercase tracking-[0.5em] mb-3 font-sans opacity-80">{product.category}</p>
-              <h3 className="font-serif text-xl md:text-2xl mb-3 text-brand-blue dark:text-brand-beige tracking-tight">{product.name}</h3>
-              <p className="text-brand-blue/60 dark:text-brand-beige/60 text-[11px] tracking-[0.2em] font-light italic">From ${product.price.toFixed(2)}</p>
+              <p className="text-[#9E7300] dark:text-brand-gold text-[9px] md:text-[10px] font-black uppercase tracking-[0.5em] mb-3 font-sans">{product.category}</p>
+              <h3 className="font-serif text-xl md:text-2xl mb-3 text-brand-blue dark:text-brand-beige tracking-tight line-clamp-2 min-h-[56px] md:min-h-[64px]">{product.name}</h3>
+              <p className="text-brand-blue/60 dark:text-brand-beige/60 text-[11px] tracking-[0.2em] font-light italic">From ₹{product.price.toLocaleString('en-IN')}</p>
             </div>
 
           </div>
