@@ -1,0 +1,3 @@
+## 2024-05-18 - Missing Firebase credentials during build
+**Learning:** `next build` encounters an error when executing `sitemap.xml` route generation because it relies on Firebase credentials that are not set in the build environment (e.g., `FIREBASE_PROJECT_ID`). This is a known Next.js App Router issue with dynamic sitemaps executing server logic at build time.
+**Action:** When running build checks locally, we can ignore this specific sitemap generation error if we are sure our component-level changes didn't break anything. In this case, our optimization was purely in a React component (`ProductGrid.tsx`), so the sitemap build error is unrelated.
