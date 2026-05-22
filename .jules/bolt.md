@@ -1,0 +1,3 @@
+## 2024-05-22 - Optimizing `ProductGrid` with `React.memo` and Set lookup
+**Learning:** `ProductGrid` currently maps through `wishlist` arrays (which are passed as props, often having some items checkable using `productId` or `id`) for every single product render using `.some()`, making it an O(N*M) operation, causing performance bottlenecks for long product grids or large wishlists.
+**Action:** Use a `Set` combined with `useMemo` in a parent component, or optimize the `wishlist` lookup using a `Set` within `ProductGrid` using `useMemo` so we have O(1) checks. Also, wrap the `ProductGrid` component itself or individual product cards inside it in `React.memo` to prevent re-rendering when parent state changes.

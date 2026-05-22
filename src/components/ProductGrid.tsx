@@ -13,8 +13,13 @@ interface ProductGridProps {
   isLoading?: boolean;
 }
 
-export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
+const ProductGrid = React.memo(function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
   const router = useRouter();
+
+  // Memoize wishlist IDs for O(1) lookup
+  const wishlistedIds = React.useMemo(() => {
+    return new Set(wishlist.map(p => p.productId || p.id));
+  }, [wishlist]);
 
   if (isLoading) {
     return (
@@ -36,7 +41,7 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
       {products.map(product => {
-        const isWishlisted = wishlist.some(p => p.id === product.id || p.productId === product.id);
+        const isWishlisted = wishlistedIds.has(product.id);
         return (
           <div 
             key={product.id} 
@@ -89,4 +94,6 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
       })}
     </div>
   );
-}
+});
+
+export default ProductGrid;
