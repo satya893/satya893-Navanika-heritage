@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { Heart, Plus } from 'lucide-react';
 import { Product } from '../data/products';
@@ -15,6 +15,19 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
   const router = useRouter();
+
+  // ⚡ Bolt Performance Optimization:
+  // What: Replaced O(N*M) array lookup with O(1) Set lookup inside the render loop
+  // Why: `wishlist.some()` was executing for every product on every render, causing unnecessary CPU cycles
+  // Impact: Reduces time complexity from O(N*M) to O(N+M), improving render speed for large product grids
+  const wishlistedIds = useMemo(() => {
+    const ids = new Set<string>();
+    wishlist.forEach(p => {
+      if (p.id) ids.add(p.id);
+      if (p.productId) ids.add(p.productId);
+    });
+    return ids;
+  }, [wishlist]);
 
   if (isLoading) {
     return (
@@ -36,7 +49,7 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
       {products.map(product => {
-        const isWishlisted = wishlist.some(p => p.id === product.id || p.productId === product.id);
+        const isWishlisted = wishlistedIds.has(product.id);
         return (
           <div 
             key={product.id} 
