@@ -1,0 +1,3 @@
+## 2024-05-24 - [O(N+M) Set vs Array.some for Wishlist Lookups]
+**Learning:** In React components rendering lists (like `ProductGrid`), checking if an item exists in a secondary array (like a wishlist) using `Array.some` creates an O(N*M) nested loop on every render. Furthermore, in this specific codebase, wishlisted products use either `id` or `productId` interchangeably, requiring checks for both.
+**Action:** When evaluating list membership during rendering, use `React.useMemo` to construct an O(1) lookup `Set` (caching both `id` and `productId` if dealing with wishlist data). This reduces the complexity to O(N+M) and drastically reduces main thread blocking during large product list renders.
