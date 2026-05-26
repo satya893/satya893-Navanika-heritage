@@ -34,8 +34,6 @@ export async function POST(request: Request) {
       couponCode?: string;
     };
 
-    console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
-
     if (!userId || !Array.isArray(items) || items.length === 0) {
       console.error('❌ [place-order] Invalid request - missing userId or items');
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
@@ -44,7 +42,6 @@ export async function POST(request: Request) {
     // Transaction: decrement stock + create order atomically
     const orderRef = dbAdmin.collection('orders').doc();
     const userRef = dbAdmin.collection('users').doc(userId);
-    console.log('🔵 [place-order] Creating order with ID:', orderRef.id);
 
     const stockUpdates: any[] = [];
     let couponDiscountAmount = 0;
@@ -91,7 +88,6 @@ export async function POST(request: Request) {
 
         const product = productSnap.data() as any;
         const currentStock = Number(product.stock ?? 100);
-        console.log(`🔵 [place-order] Product ${item.productId}: stock=${currentStock}, required=${qty}`);
 
         if (currentStock < qty) {
           console.error(`❌ [place-order] Insufficient stock for ${item.productId}`);
@@ -140,8 +136,6 @@ export async function POST(request: Request) {
                      paymentMethod === 'cod' ? 'confirmed' : 
                      paymentMethod === 'upi' ? 'pending_verification' : 'pending';
 
-      console.log('🔵 [place-order] Setting order status to:', status);
-
       tx.set(orderRef, {
         id: orderRef.id,
         userId,
@@ -161,8 +155,6 @@ export async function POST(request: Request) {
         createdAt: new Date().toISOString(),
       });
     });
-
-    console.log('🔵 [place-order] Order created successfully:', orderRef.id);
 
     // Notify Admin of New Order
     await sendAdminNotificationServer({
@@ -189,7 +181,6 @@ export async function POST(request: Request) {
     });
 
     if (lowStockItems.length > 0) {
-      console.log('⚠️ [place-order] Low stock detected for items:', lowStockItems.map(i => i.name));
       // Notify admin (fire and forget for this request)
       Promise.all(lowStockItems.map(item => {
         const update = stockUpdates.find(u => u.ref.id === item.productId);
