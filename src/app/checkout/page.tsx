@@ -187,8 +187,6 @@ export default function CheckoutPage() {
     setPaying(true);
     setStep('Payment');
     try {
-      console.log('🔵 Starting COD checkout with cart items:', cart.length);
-      
       const items: OrderItem[] = cart.map(item => ({
         productId: item.productId || item.id,
         name: item.name,
@@ -199,8 +197,6 @@ export default function CheckoutPage() {
       }));
 
       const mockPaymentId = `cod_${Date.now()}`;
-
-      console.log('🔵 Placing COD order...', { userId: user!.uid, itemsCount: items.length });
 
       // Stock enforced + order created atomically
       const res = await fetch('/api/checkout/place-order', {
@@ -217,9 +213,7 @@ export default function CheckoutPage() {
         }),
       });
 
-      console.log('🔵 Place order response status:', res.status);
       const data = await res.json();
-      console.log('🔵 Place order response:', data);
 
       if (!res.ok) {
         const errorMsg = data?.error || 'Error processing your COD order';
@@ -231,20 +225,16 @@ export default function CheckoutPage() {
       }
 
       const orderId = data.orderId as string;
-      console.log('🔵 Order created successfully! ID:', orderId);
 
       // Clear cart AFTER order is created
-      console.log('🔵 Clearing cart...');
       await fetch('/api/checkout/clear-cart', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user!.uid, cartItems: cart.map((c) => ({ id: c.id })) }),
       });
 
-      console.log('🔵 Sending notifications...');
       await sendNotifications(orderId);
       
-      console.log('🔵 Redirecting to order page:', `/order/${orderId}`);
       router.push(`/order/${orderId}`);
     } catch (err) {
       console.error('❌ COD Error:', err);
