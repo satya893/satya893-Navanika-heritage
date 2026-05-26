@@ -13,9 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    // Verify stock exists and is sufficient
-    const updates: Array<{ productId: string; currentStock: number; requested: number }> = [];
-
+    // Step 1: Validate all items
     for (const item of cartItems) {
       if (!item?.productId) {
         return NextResponse.json({ error: 'Missing productId' }, { status: 400 });
@@ -24,8 +22,22 @@ export async function POST(request: Request) {
       if (!Number.isFinite(qty) || qty <= 0) {
         return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 });
       }
+    }
 
-      const productSnap = await dbAdmin.collection('products').doc(item.productId).get();
+    // Step 2: Fetch all product documents in parallel
+    // This fixes the N+1 query issue by requesting all docs concurrently
+    const productSnaps = await Promise.all(
+      cartItems.map((item) => dbAdmin.collection('products').doc(item.productId).get())
+    );
+
+    // Verify stock exists and is sufficient
+    const updates: Array<{ productId: string; currentStock: number; requested: number }> = [];
+
+    for (let i = 0; i < cartItems.length; i++) {
+      const item = cartItems[i];
+      const qty = Number(item.quantity);
+      const productSnap = productSnaps[i];
+
       if (!productSnap.exists) {
         return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 404 });
       }
