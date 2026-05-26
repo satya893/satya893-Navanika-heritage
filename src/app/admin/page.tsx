@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { collection, getDocs, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Package, ShoppingBag, Users, TrendingUp, Plus, X, Edit2, Trash2, Send, Megaphone, Download, Save, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -248,18 +248,22 @@ export default function AdminDashboard() {
       if (!order) return;
 
       if (type === 'cancellation' && decision === 'approved') {
+        const batch = writeBatch(db);
+
         // 1. Restore stock
         for (const item of order.items) {
           const productRef = doc(db, 'products', item.productId);
-          await updateDoc(productRef, { stock: increment(item.quantity) });
+          batch.update(productRef, { stock: increment(item.quantity) });
         }
         
         // 2. Update status
-        await updateDoc(orderRef, {
+        batch.update(orderRef, {
           status: 'cancelled',
           'cancellationRequest.status': 'approved',
           cancelledAt: new Date().toISOString()
         });
+
+        await batch.commit();
 
         // 3. Send Notification Email (Try to find email in shipping or userId)
         const recipientEmail = order.shipping.email || (order.userId?.includes('@') ? order.userId : null);
