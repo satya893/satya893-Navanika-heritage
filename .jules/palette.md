@@ -1,0 +1,3 @@
+## 2024-05-27 - Missing ARIA Labels on Icon-Only Buttons
+**Learning:** Icon-only buttons (like those with just an icon component) across the codebase frequently lack `aria-label` attributes, making them inaccessible to screen readers. For instance, the Close, Remove, Decrease, and Increase quantity buttons in the Cart component had this issue.
+**Action:** When adding or modifying icon-only buttons, always ensure they include descriptive `aria-label` attributes to maintain accessibility.
