@@ -34,6 +34,12 @@ export async function POST(request: Request) {
       couponCode?: string;
     };
 
+    const authenticatedUserId = request.headers.get('x-user-id');
+    if (userId !== authenticatedUserId) {
+      console.error(`❌ [place-order] IDOR attempt: requested ${userId}, authenticated ${authenticatedUserId}`);
+      return NextResponse.json({ error: 'Forbidden: User ID mismatch' }, { status: 403 });
+    }
+
     console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
 
     if (!userId || !Array.isArray(items) || items.length === 0) {

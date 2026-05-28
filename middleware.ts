@@ -16,7 +16,16 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     try {
-      await verifyAuthToken(token);
+      const decodedToken = await verifyAuthToken(token);
+      const requestHeaders = new Headers(request.headers);
+      if (decodedToken?.uid) {
+        requestHeaders.set('x-user-id', decodedToken.uid);
+      }
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
