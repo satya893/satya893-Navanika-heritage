@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { collection, getDocs, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, addDoc, deleteDoc, doc, updateDoc, increment, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Package, ShoppingBag, Users, TrendingUp, Plus, X, Edit2, Trash2, Send, Megaphone, Download, Save, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -226,10 +226,20 @@ export default function AdminDashboard() {
     }
     setIsBulkUpdating(true);
     try {
-      const promises = Object.entries(bulkStock).map(([id, stock]) => 
-        updateDoc(doc(db, 'products', id), { stock: Number(stock) })
-      );
-      await Promise.all(promises);
+      const entries = Object.entries(bulkStock);
+      // ⚡ Bolt Optimization: Use Firestore writeBatch instead of Promise.all(updateDoc)
+      // Impact: Significantly reduces network overhead and prevents freezing by batching multiple API calls into single requests.
+      // Firestore allows up to 500 writes per batch, so we chunk them here.
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        const chunk = entries.slice(i, i + BATCH_SIZE);
+        chunk.forEach(([id, stock]) => {
+          const productRef = doc(db, 'products', id);
+          batch.update(productRef, { stock: Number(stock) });
+        });
+        await batch.commit();
+      }
       setProducts(products.map(p => bulkStock[p.id] !== undefined ? { ...p, stock: bulkStock[p.id] } : p));
       setBulkStock({});
       toast.success("Bulk stock updated successfully!");
