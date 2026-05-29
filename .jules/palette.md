@@ -1,0 +1,3 @@
+## 2026-05-29 - Missing ARIA Labels on Icon-only Buttons
+**Learning:** The Cart component (and potentially others) uses Lucide icons for primary actions (Close, Remove, Increase/Decrease quantity) without accompanying text. While visually clean, this causes significant accessibility issues as screen readers have no context for these buttons.
+**Action:** When working on UI components, specifically those dealing with Cart or similar dynamic lists, ensure all icon-only buttons have descriptive `aria-label` attributes. For items in lists, dynamically including the item name in the label (e.g., `Remove ${item.name} from cart`) provides excellent context.
