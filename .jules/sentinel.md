@@ -1,0 +1,4 @@
+## 2024-05-29 - Prevent HMAC Timing Attack in Razorpay Webhook Verification
+**Vulnerability:** The Razorpay webhook signature comparison in `src/app/api/webhooks/razorpay/route.ts` used a basic string equality comparison (`!==`), making it susceptible to timing attacks. An attacker could potentially infer the correct signature character by character by measuring the exact time taken by the server to reject incorrect signatures.
+**Learning:** Comparing cryptographic hashes/signatures using standard string equality operators is unsafe because the comparison exits early at the first mismatched character. This leaks timing information.
+**Prevention:** Always use a constant-time comparison function, such as `crypto.timingSafeEqual()` in Node.js, for validating cryptographic signatures. Also ensure that both buffers being compared are of equal length before comparison to avoid errors.
