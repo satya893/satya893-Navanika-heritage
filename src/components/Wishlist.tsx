@@ -41,7 +41,7 @@ export default function Wishlist({ isOpen, onClose, user, wishlist }: WishlistPr
               <h2 className="text-2xl font-serif text-brand-blue dark:text-brand-beige">Personal Curation</h2>
               <p className="text-[9px] text-brand-gold uppercase tracking-[0.4em] font-black mt-1">Wishlist ({wishlist.length})</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-brand-blue/5 dark:hover:bg-white/5 rounded-full transition-colors text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige">
+            <button onClick={onClose} aria-label="Close wishlist" className="p-2 hover:bg-brand-blue/5 dark:hover:bg-white/5 rounded-full transition-colors text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige">
               <X size={20} />
             </button>
           </div>
@@ -70,7 +70,7 @@ export default function Wishlist({ isOpen, onClose, user, wishlist }: WishlistPr
                         <h4 className="font-serif text-lg text-brand-blue dark:text-brand-beige">{item.name}</h4>
                         <p className="text-[9px] text-brand-blue/40 dark:text-brand-beige/40 mt-1 uppercase tracking-widest font-bold">${item.price.toFixed(2)}</p>
                       </div>
-                      <button onClick={() => removeItem(item.id)} className="text-brand-blue/20 dark:text-brand-beige/20 hover:text-red-500 transition-colors">
+                      <button onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name} from wishlist`} className="text-brand-blue/20 dark:text-brand-beige/20 hover:text-red-500 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>
