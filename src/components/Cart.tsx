@@ -53,7 +53,7 @@ export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartPr
               <h2 className="text-2xl font-serif text-brand-blue dark:text-brand-beige">Atelier Selection</h2>
               <p className="text-[9px] text-brand-gold uppercase tracking-[0.4em] font-black mt-1">Curation ({cart.length})</p>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-brand-blue/5 dark:hover:bg-white/5 rounded-full transition-colors text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige">
+            <button onClick={onClose} aria-label="Close cart" className="p-2 hover:bg-brand-blue/5 dark:hover:bg-white/5 rounded-full transition-colors text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige">
               <X size={20} />
             </button>
           </div>
@@ -87,15 +87,15 @@ export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartPr
                           )}
                         </div>
                       </div>
-                      <button onClick={() => removeItem(item.id)} className="text-brand-blue/20 dark:text-brand-beige/20 hover:text-red-500 transition-colors">
+                      <button onClick={() => removeItem(item.id)} aria-label={`Remove ${item.name} from cart`} className="text-brand-blue/20 dark:text-brand-beige/20 hover:text-red-500 transition-colors">
                         <Trash2 size={16} />
                       </button>
                     </div>
                     <div className="flex justify-between items-center">
                       <div className="flex items-center bg-brand-blue/5 dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 rounded-full p-1">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="p-1 text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige"><Minus size={12} /></button>
+                        <button onClick={() => updateQuantity(item.id, -1)} aria-label="Decrease quantity" className="p-1 text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige"><Minus size={12} /></button>
                         <span className="w-8 text-center text-xs font-bold text-brand-blue dark:text-brand-beige">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="p-1 text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige"><Plus size={12} /></button>
+                        <button onClick={() => updateQuantity(item.id, 1)} aria-label="Increase quantity" className="p-1 text-brand-blue/40 dark:text-brand-beige/40 hover:text-brand-blue dark:hover:text-brand-beige"><Plus size={12} /></button>
                       </div>
                       <p className="font-serif text-lg text-brand-blue dark:text-brand-beige">${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
