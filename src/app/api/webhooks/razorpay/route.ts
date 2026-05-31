@@ -11,9 +11,9 @@ export async function POST(request: Request) {
     }
 
     const body = await request.text();
-    const signature = request.headers.get('x-razorpay-signature') as string;
+    const signature = request.headers.get('x-razorpay-signature');
 
-    if (!signature) {
+    if (!signature || typeof signature !== 'string') {
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
@@ -23,7 +23,11 @@ export async function POST(request: Request) {
       .update(body)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
+    const signatureBuffer = Buffer.from(signature, 'utf-8');
+
+    // Prevent timing attacks by comparing lengths and using timingSafeEqual
+    if (expectedBuffer.length !== signatureBuffer.length || !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)) {
       console.warn('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
