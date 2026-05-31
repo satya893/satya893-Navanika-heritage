@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = bodyText;
 
     // Validate required fields
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || typeof razorpay_signature !== 'string') {
       return NextResponse.json(
         { success: false, message: 'Missing required payment fields' },
         { status: 400 }
@@ -29,7 +29,12 @@ export async function POST(request: Request) {
       .update(body.toString())
       .digest('hex');
 
-    const isAuthentic = expectedSignature === razorpay_signature;
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf-8');
+    const signatureBuffer = Buffer.from(razorpay_signature, 'utf-8');
+
+    // Prevent timing attacks by comparing lengths and using timingSafeEqual
+    const isAuthentic = expectedBuffer.length === signatureBuffer.length &&
+                        crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
 
     if (isAuthentic) {
       console.log(`Payment verified for order ${razorpay_order_id}`);
