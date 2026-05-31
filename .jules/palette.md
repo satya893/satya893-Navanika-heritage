@@ -1,0 +1,3 @@
+## 2024-05-31 - ARIA Labels on Icon-only Buttons
+**Learning:** Found multiple instances of icon-only buttons (`Trash2`, `Minus`, `Plus`, `X`) missing accessible names within the application components like `Cart.tsx`. While they had tooltips or contextually obvious visual purposes, they were completely silent to screen readers. Dynamic ARIA labels that include the item name (e.g., `Remove ${item.name} from cart`) significantly improve the screen reader experience compared to generic labels.
+**Action:** When working on UI components, particularly lists or carts, always use dynamic and descriptive `aria-label`s for icon-only interactive elements to provide context beyond just the action type.
