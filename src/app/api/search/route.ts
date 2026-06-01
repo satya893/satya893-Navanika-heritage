@@ -16,24 +16,27 @@ export async function GET(request: Request) {
       productsQuery = productsQuery.where('category', '==', category);
     }
 
+    // Bolt: Delegate price filtering to database to reduce payload and execution time
+    if (minPrice > 0) {
+      productsQuery = productsQuery.where('price', '>=', minPrice);
+    }
+
+    if (maxPrice < Infinity) {
+      productsQuery = productsQuery.where('price', '<=', maxPrice);
+    }
+
     const snapshot = await productsQuery.get();
     let results = snapshot.docs.map((doc: any) => ({
       id: doc.id,
       ...doc.data()
     }));
 
-    // Perform text search and price filtering
+    // Perform text search
     if (q) {
       results = results.filter((p: any) => 
         p.name?.toLowerCase().includes(q) || 
         p.description?.toLowerCase().includes(q) ||
         p.category?.toLowerCase().includes(q)
-      );
-    }
-
-    if (minPrice > 0 || maxPrice < Infinity) {
-      results = results.filter((p: any) => 
-        p.price >= minPrice && p.price <= maxPrice
       );
     }
 

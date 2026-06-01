@@ -1,0 +1,3 @@
+## 2024-05-24 - Firestore Composite Indexes Required for Combined Filtering
+**Learning:** When moving filtering logic (e.g., price ranges combined with category equality) from in-memory JavaScript to Firestore queries to save bandwidth and execution time, Firestore *requires* a composite index to be declared in `firestore.indexes.json` and referenced in `firebase.json`. Failing to do so causes the query to fail in production with a `FAILED_PRECONDITION` error.
+**Action:** Always verify if a proposed query optimization involving multiple fields needs a composite index. If it does, create/update `firestore.indexes.json` and modify `firebase.json` to include `"indexes": "firestore.indexes.json"` within the `firestore` block.
