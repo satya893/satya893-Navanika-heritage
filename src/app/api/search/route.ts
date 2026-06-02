@@ -8,12 +8,23 @@ export async function GET(request: Request) {
     const category = searchParams.get('category');
     const minPrice = parseFloat(searchParams.get('minPrice') || '0');
     const maxPrice = parseFloat(searchParams.get('maxPrice') || 'Infinity');
+    const limit = parseInt(searchParams.get('limit') || '0', 10);
 
     let productsQuery: any = dbAdmin.collection('products');
 
     // Apply category filter if present
     if (category && category !== 'all') {
       productsQuery = productsQuery.where('category', '==', category);
+    }
+
+    // Since text search/price filtering is done in-memory, we can't apply
+    // the Firestore .limit() directly if we have complex filters.
+    // However, if there are no complex text/price filters, we can apply limit at the DB level.
+    const hasTextSearch = q.length > 0;
+    const hasPriceFilter = minPrice > 0 || maxPrice < Infinity;
+
+    if (!hasTextSearch && !hasPriceFilter && limit > 0) {
+      productsQuery = productsQuery.limit(limit);
     }
 
     const snapshot = await productsQuery.get();
@@ -23,7 +34,7 @@ export async function GET(request: Request) {
     }));
 
     // Perform text search and price filtering
-    if (q) {
+    if (hasTextSearch) {
       results = results.filter((p: any) => 
         p.name?.toLowerCase().includes(q) || 
         p.description?.toLowerCase().includes(q) ||
@@ -31,10 +42,15 @@ export async function GET(request: Request) {
       );
     }
 
-    if (minPrice > 0 || maxPrice < Infinity) {
+    if (hasPriceFilter) {
       results = results.filter((p: any) => 
         p.price >= minPrice && p.price <= maxPrice
       );
+    }
+
+    // Apply limit if specified and we had to filter in-memory
+    if ((hasTextSearch || hasPriceFilter) && limit > 0) {
+      results = results.slice(0, limit);
     }
 
     return NextResponse.json(results);
