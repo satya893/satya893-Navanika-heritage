@@ -68,6 +68,7 @@ export default function NotificationBell() {
   return (
     <div className="relative">
       <button 
+        aria-label="Toggle notifications"
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-brand-blue dark:text-brand-beige hover:bg-brand-gold/10 rounded-full transition-all"
       >
