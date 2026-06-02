@@ -23,7 +23,14 @@ export async function POST(request: Request) {
       .update(body)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    const signatureBuffer = Buffer.from(signature || '', 'hex');
+
+    // Use timingSafeEqual to prevent timing attacks
+    const isValid = expectedBuffer.length === signatureBuffer.length &&
+                    crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
+
+    if (!isValid) {
       console.warn('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
