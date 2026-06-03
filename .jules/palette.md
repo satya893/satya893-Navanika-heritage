@@ -1,0 +1,1 @@
+## 2025-02-18 - Missing ARIA Labels on Icon-only Buttons\n**Learning:** Icon-only buttons (like the wishlist heart or close X buttons) lack aria-label attributes, making them inaccessible to screen reader users.\n**Action:** Add aria-label attributes to all icon-only interactive elements to describe their purpose.
