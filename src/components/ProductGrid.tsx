@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Image from 'next/image';
 import { Heart, Plus } from 'lucide-react';
 import { Product } from '../data/products';
@@ -15,6 +15,19 @@ interface ProductGridProps {
 
 export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
   const router = useRouter();
+
+  // ⚡ BOLT OPTIMIZATION: Convert wishlist array to a Set for O(1) lookups.
+  // This turns the O(N*M) lookup inside the products.map loop into O(N+M),
+  // preventing performance degradation on large product lists and wishlists.
+  const wishlistedIds = useMemo(() => {
+    const ids = new Set();
+    // Note: wishlist items can use both id and productId fields
+    wishlist.forEach(p => {
+      if (p.id) ids.add(p.id);
+      if (p.productId) ids.add(p.productId);
+    });
+    return ids;
+  }, [wishlist]);
 
   if (isLoading) {
     return (
@@ -36,7 +49,7 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
       {products.map(product => {
-        const isWishlisted = wishlist.some(p => p.id === product.id || p.productId === product.id);
+        const isWishlisted = wishlistedIds.has(product.id);
         return (
           <div 
             key={product.id} 
