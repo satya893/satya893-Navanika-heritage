@@ -1,0 +1,4 @@
+## 2024-11-20 - Webhook HMAC Timing Attack
+**Vulnerability:** Comparing webhook HMAC signatures (e.g., Razorpay) using standard string equality (`===`) allows timing attacks where an attacker can determine the expected signature character by character by measuring the response time.
+**Learning:** Node.js/Next.js API route webhooks are vulnerable to this if signatures are not compared in constant time.
+**Prevention:** Always convert signatures to buffers and use `crypto.timingSafeEqual(bufferA, bufferB)` for comparison. Ensure you check that both buffers have the exact same length before calling `timingSafeEqual` to avoid errors. Use `Buffer.from(signature || '', 'utf8')` as a fallback to avoid TypeErrors if the header is unexpectedly missing.
