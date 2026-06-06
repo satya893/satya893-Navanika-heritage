@@ -17,13 +17,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
     }
 
-    // Verify webhook signature
+    // Verify webhook signature securely to prevent timing attacks
     const expectedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
       .update(body)
       .digest('hex');
 
-    if (signature !== expectedSignature) {
+    const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+    const signatureBuffer = Buffer.from(signature || '', 'utf8');
+
+    if (
+      expectedBuffer.length !== signatureBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)
+    ) {
       console.warn('Invalid webhook signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
