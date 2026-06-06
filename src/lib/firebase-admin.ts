@@ -1,4 +1,4 @@
-import type admin from 'firebase-admin';
+import admin from 'firebase-admin';
 
 type AdminType = typeof admin;
 
@@ -6,8 +6,7 @@ let _admin: AdminType | null = null;
 
 function getAdmin(): AdminType {
   if (!_admin) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _admin = require('firebase-admin') as AdminType;
+    _admin = admin;
     if (!_admin!.apps.length) {
       const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
       if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
