@@ -61,7 +61,6 @@ export const TRENDING_PRODUCTS = ALL_PRODUCTS.filter(p => p.isTrending);
 
 export const fetchProducts = async (categoryStr?: string): Promise<Product[]> => {
   try {
-    console.log('Fetching products for category:', categoryStr);
     const productsRef = collection(db, 'products');
     let q = query(productsRef);
 
