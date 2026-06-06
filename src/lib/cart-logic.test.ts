@@ -21,4 +21,15 @@ describe('Cart Logic Tests', () => {
     expect(validateQuantity(-1)).toBe(false);
     expect(validateQuantity(1.5)).toBe(false);
   });
+
+  test('validates extreme and invalid quantity values (edge cases)', () => {
+    expect(validateQuantity(NaN)).toBe(false);
+    expect(validateQuantity(Infinity)).toBe(false);
+    expect(validateQuantity(-Infinity)).toBe(false);
+    // Extreme large, but valid positive integer
+    expect(validateQuantity(Number.MAX_SAFE_INTEGER)).toBe(true);
+    // Over max safe integer might lose precision but technically JS might consider it an integer
+    // However, usually we test boundary of safe integer
+    expect(validateQuantity(Number.MAX_SAFE_INTEGER + 1)).toBe(true);
+  });
 });
