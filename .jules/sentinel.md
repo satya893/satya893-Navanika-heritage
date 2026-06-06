@@ -1,0 +1,4 @@
+## 2025-02-27 - IDOR in Order Actions API
+**Vulnerability:** Insecure Direct Object Reference (IDOR) where a malicious actor could pass arbitrary `userId` and `orderId` in the request body to cancel or request returns for orders they do not own. The API route previously trusted the request parameters without explicitly comparing them to the authenticated user's ID.
+**Learning:** Next.js middleware is the ideal place to intercept the authentication token, verify it, and securely inject the authenticated user's ID (e.g., as an `x-user-id` header) into downstream API routes. This prevents client-side tampering of the `userId`.
+**Prevention:** Never trust client-provided IDs for authorization. Always derive the authenticated user's ID from a trusted source (like an intercepting middleware or server-side token validation) and explicitly verify ownership (`resource.userId === authenticatedUserId`) within the API route handler before modifying resources.
