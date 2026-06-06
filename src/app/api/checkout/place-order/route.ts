@@ -34,11 +34,18 @@ export async function POST(request: Request) {
       couponCode?: string;
     };
 
-    console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
+    const authenticatedUserId = request.headers.get('x-user-id');
+
+    console.log('🔵 [place-order] Received request:', { userId, authenticatedUserId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
 
     if (!userId || !Array.isArray(items) || items.length === 0) {
       console.error('❌ [place-order] Invalid request - missing userId or items');
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    }
+
+    if (!authenticatedUserId || authenticatedUserId !== userId) {
+      console.error('❌ [place-order] Unauthorized - user ID mismatch or missing');
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Transaction: decrement stock + create order atomically
