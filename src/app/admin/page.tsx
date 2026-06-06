@@ -71,10 +71,12 @@ export default function AdminDashboard() {
   }, [hasAccess]);
 
   const fetchGiftCards = async () => {
-    const gcSnap = await getDocs(query(collection(db, 'giftCards'), orderBy('createdAt', 'desc')));
-    setGiftCards(gcSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const [gcSnap, couponSnap] = await Promise.all([
+      getDocs(query(collection(db, 'giftCards'), orderBy('createdAt', 'desc'))),
+      getDocs(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')))
+    ]);
     
-    const couponSnap = await getDocs(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')));
+    setGiftCards(gcSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     setCoupons(couponSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
