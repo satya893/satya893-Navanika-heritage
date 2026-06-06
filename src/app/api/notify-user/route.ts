@@ -84,14 +84,31 @@ export async function POST(request: Request) {
             <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin" style="display: inline-block; background: #0A1128; color: white; padding: 12px 24px; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Restock Now</a>
             ${footer}`;
           break;
-        case 'abandoned_cart':
+        case 'abandoned_cart': {
           subject = `A Piece of Heritage is Waiting...`;
+
+          let safeLink = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/cart` : '/cart';
+          if (cartLink) {
+            try {
+              const baseUrlStr = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+              const parsedUrl = new URL(cartLink, baseUrlStr);
+              const expectedHost = new URL(baseUrlStr).host;
+
+              if ((parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') && parsedUrl.host === expectedHost) {
+                safeLink = parsedUrl.toString();
+              }
+            } catch (e) {
+              // Invalid URL, fallback to safeLink
+            }
+          }
+
           html = `${header}
             <h2 style="font-size: 20px; font-weight: normal; color: #0A1128;">Don't let it slip away.</h2>
             <p>We noticed you left something exquisite in your cart. Our handcrafted collections are often unique and sell out quickly.</p>
-            <a href="${cartLink}" style="display: inline-block; background: #C5A059; color: white; padding: 15px 30px; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 20px 0;">Return to Cart</a>
+            <a href="${safeLink}" style="display: inline-block; background: #C5A059; color: white; padding: 15px 30px; text-decoration: none; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 20px 0;">Return to Cart</a>
             ${footer}`;
           break;
+        }
         case 'order_delivered':
           subject = `Delivered: Your Heritage Has Arrived!`;
           html = `${header}
