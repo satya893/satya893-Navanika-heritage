@@ -6,11 +6,61 @@ import { collection, onSnapshot, query, doc, setDoc, deleteDoc, getDoc } from 'f
 import { auth, db } from '../firebase';
 import { Product } from '../data/products';
 
+export interface CartItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+  size: string | null;
+  addedAt: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  productId: string;
+  name: string;
+  price: number;
+  image: string;
+  addedAt: string;
+}
+
+export interface UserAddress {
+  id: string;
+  label: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+export interface UserSession {
+  id: string;
+  deviceName: string;
+  lastActive: string;
+}
+
+export interface UserData {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  role: 'admin' | 'user' | 'moderator';
+  createdAt: string;
+  walletBalance?: number;
+  addresses?: UserAddress[];
+  sessions?: UserSession[];
+}
+
 interface AppContextType {
   user: User | null;
-  userData: any | null;
-  cart: any[];
-  wishlist: any[];
+  userData: UserData | null;
+  cart: CartItem[];
+  wishlist: WishlistItem[];
   isAuthOpen: boolean;
   setIsAuthOpen: (open: boolean) => void;
   isCartOpen: boolean;
@@ -23,8 +73,8 @@ interface AppContextType {
   setIsGenOpen: (open: boolean) => void;
   isModelingStudioOpen: boolean;
   setIsModelingStudioOpen: (open: boolean) => void;
-  selectedProductForStudio: any;
-  setSelectedProductForStudio: (product: any) => void;
+  selectedProductForStudio: Product | null;
+  setSelectedProductForStudio: (product: Product | null) => void;
   addToCart: (product: Product, size?: string) => Promise<void>;
   toggleWishlist: (product: Product) => Promise<void>;
   isDarkMode: boolean;
@@ -35,15 +85,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<any | null>(null);
-  const [cart, setCart] = useState<any[]>([]);
-  const [wishlist, setWishlist] = useState<any[]>([]);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isGenOpen, setIsGenOpen] = useState(false);
   const [isModelingStudioOpen, setIsModelingStudioOpen] = useState(false);
-  const [selectedProductForStudio, setSelectedProductForStudio] = useState<any>(null);
+  const [selectedProductForStudio, setSelectedProductForStudio] = useState<Product | null>(null);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -91,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const userRef = doc(db, 'users', user.uid);
         const unsubUser = onSnapshot(userRef, async (userSnap) => {
           if (!userSnap.exists()) {
-            const newUserData = {
+            const newUserData: UserData = {
               uid: user.uid,
               displayName: user.displayName,
               email: user.email,
@@ -102,7 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             await setDoc(userRef, newUserData);
             setUserData(newUserData);
           } else {
-            const existingData = userSnap.data();
+            const existingData = userSnap.data() as UserData;
             if (shouldBeAdmin && existingData.role !== 'admin') {
               await setDoc(userRef, { role: 'admin' }, { merge: true });
               existingData.role = 'admin';
@@ -114,13 +164,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         const cartQuery = query(collection(db, 'users', user.uid, 'cart'));
         const unsubCart = onSnapshot(cartQuery, (snapshot) => {
-          setCart(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          setCart(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CartItem)));
         });
         unsubs.push(unsubCart);
 
         const wishlistQuery = query(collection(db, 'users', user.uid, 'wishlist'));
         const unsubWishlist = onSnapshot(wishlistQuery, (snapshot) => {
-          setWishlist(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          setWishlist(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WishlistItem)));
         });
         unsubs.push(unsubWishlist);
       } else {
