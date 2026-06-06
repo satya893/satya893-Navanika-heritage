@@ -203,7 +203,10 @@ export async function POST(request: Request) {
 
         return fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/notify-user`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-internal-secret': process.env.API_SECRET || ''
+          },
           body: JSON.stringify({
             type: 'low_stock',
             productName: item.name,

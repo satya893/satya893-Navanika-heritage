@@ -10,15 +10,20 @@ export async function middleware(request: NextRequest) {
 
   // Protect API routes
   if (apiPaths.some(path => pathname.startsWith(path))) {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '') || 
-                  request.cookies.get('token')?.value;
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    try {
-      await verifyAuthToken(token);
-    } catch {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    const internalSecret = request.headers.get('x-internal-secret');
+    if (internalSecret && process.env.API_SECRET && internalSecret === process.env.API_SECRET) {
+      // Allow internal server-to-server calls to bypass token verification
+    } else {
+      const token = request.headers.get('authorization')?.replace('Bearer ', '') ||
+                    request.cookies.get('token')?.value;
+      if (!token) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      try {
+        await verifyAuthToken(token);
+      } catch {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      }
     }
   }
 

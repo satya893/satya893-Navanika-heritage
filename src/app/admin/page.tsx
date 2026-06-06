@@ -162,9 +162,13 @@ export default function AdminDashboard() {
 
       // 1. Trigger Automated Email for Shipped/Delivered
       if (newStatus === 'shipped' || newStatus === 'delivered') {
+        const token = await user?.getIdToken();
         await fetch('/api/notify-user', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({
             email: userEmail,
             type: newStatus === 'shipped' ? 'order_shipped' : 'order_delivered',
@@ -267,9 +271,13 @@ export default function AdminDashboard() {
         console.log(`[ADMIN] Approving cancellation for ${orderId}. Recipient: ${recipientEmail}, Type: ${order.cancellationRequest.type}`);
 
         if (recipientEmail) {
+          const token = await user?.getIdToken();
           const notifyRes = await fetch('/api/notify-user', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({
               email: recipientEmail,
               type: 'order_refunded',
