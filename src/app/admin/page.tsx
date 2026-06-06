@@ -80,12 +80,15 @@ export default function AdminDashboard() {
 
   const fetchAdminData = async () => {
     try {
-      // Fetch recent orders
-      const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(50)));
+      // ⚡ Bolt: Fetch independent data sets concurrently to improve load time
+      const [ordersSnap, productsSnap, usersSnap] = await Promise.all([
+        getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(50))),
+        getDocs(query(collection(db, 'products'))),
+        getDocs(query(collection(db, 'users')))
+      ]);
+
       setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-      // Fetch products (fetch all for admin view)
-      const productsSnap = await getDocs(query(collection(db, 'products')));
       // Sort in JS: put items with createdAt first (newest), then the rest
       const fetchedProducts = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
       fetchedProducts.sort((a, b) => {
@@ -96,8 +99,6 @@ export default function AdminDashboard() {
       });
       setProducts(fetchedProducts);
 
-      // Fetch users
-      const usersSnap = await getDocs(query(collection(db, 'users')));
       setUsers(usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
       console.error("Error fetching admin data:", error);
