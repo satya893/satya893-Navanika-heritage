@@ -342,7 +342,7 @@ function ProfilePageInner() {
                         <div className="flex gap-2">
                           <input 
                             type="text" 
-                            placeholder="GIFT-XXXX-XXXX"
+                            placeholder="Enter gift card code"
                             value={giftCardCode}
                             onChange={(e) => setGiftCardCode(e.target.value)}
                             className="flex-1 bg-white dark:bg-white/5 border border-brand-blue/10 dark:border-white/10 px-4 py-3 text-xs text-brand-blue dark:text-brand-beige rounded-sm focus:outline-none focus:border-brand-gold uppercase placeholder:normal-case"
