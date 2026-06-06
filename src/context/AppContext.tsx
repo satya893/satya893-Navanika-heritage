@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, onSnapshot, query, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -29,6 +29,8 @@ interface AppContextType {
   toggleWishlist: (product: Product) => Promise<void>;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  cartCount: number;
+  cartTotal: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -48,6 +50,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(email => email.trim().toLowerCase()) || [];
+
+  const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
 
   useEffect(() => {
     // Initial theme and guest data setup
@@ -227,6 +232,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isModelingStudioOpen, setIsModelingStudioOpen,
       selectedProductForStudio, setSelectedProductForStudio,
       addToCart, toggleWishlist,
+      cartCount, cartTotal,
       isDarkMode, toggleDarkMode: () => {
         const nextMode = !isDarkMode;
         setIsDarkMode(nextMode);

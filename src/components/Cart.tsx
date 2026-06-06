@@ -6,6 +6,8 @@ import { User } from 'firebase/auth';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 
+import { useApp } from '../context/AppContext';
+
 interface CartProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,7 +17,7 @@ interface CartProps {
 }
 
 export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartProps) {
-  const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const { cartTotal: total } = useApp();
 
   const updateQuantity = async (itemId: string, delta: number) => {
     if (!user) return;

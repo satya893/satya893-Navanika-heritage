@@ -8,8 +8,7 @@ import { useApp } from '../context/AppContext';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { cart, setIsCartOpen } = useApp();
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const { setIsCartOpen, cartCount } = useApp();
 
   const navItems = [
     { label: 'Home', icon: Home, path: '/' },
@@ -34,6 +33,9 @@ export default function MobileBottomNav() {
             >
               <Icon size={20} className={isActive ? 'scale-110' : ''} />
               <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+              {item.label === 'Cart' && cartCount > 0 && (
+                 <span className="absolute top-0 right-0 bg-brand-gold text-white text-[8px] font-bold w-3 h-3 flex items-center justify-center rounded-full">{cartCount}</span>
+              )}
             </Link>
           );
         })}
