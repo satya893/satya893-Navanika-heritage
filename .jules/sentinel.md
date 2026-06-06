@@ -1,0 +1,4 @@
+## 2024-05-24 - XSS in JSON-LD
+**Vulnerability:** Unescaped `<` character in user-controlled data embedded in `<script type="application/ld+json">` tag via `dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}` allows an attacker to inject an early `</script>` tag, followed by a new `<script>` tag carrying a malicious payload. This is a severe Cross-Site Scripting (XSS) vulnerability.
+**Learning:** `JSON.stringify` does not escape HTML-sensitive characters like `<` or `>`. When rendering a stringified JSON object into an HTML document context (such as within `<script>` tags), these characters must be explicitly escaped to prevent tag manipulation.
+**Prevention:** Always escape `<` to `\u003c` when injecting JSON into HTML script blocks using `JSON.stringify(data).replace(/</g, '\\u003c')`.
