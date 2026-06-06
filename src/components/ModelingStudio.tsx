@@ -4,15 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
 import { analyzeTryOn } from '../lib/gemini';
 
+import { Product } from '../data/products';
+
 interface ModelingStudioProps {
   isOpen: boolean;
   onClose: () => void;
-  product?: {
-    id: string;
-    name: string;
-    image: string;
-    category: string;
-  };
+  product?: Product | null;
 }
 
 export default function ModelingStudio({ isOpen, onClose, product }: ModelingStudioProps) {

@@ -155,8 +155,8 @@ function ProfilePageInner() {
                 <div className="relative w-32 h-32 rounded-full p-1 bg-gradient-to-tr from-brand-gold via-brand-beige to-brand-gold shadow-[0_0_25px_rgba(184,142,47,0.2)]">
                   <div className="relative w-full h-full rounded-full border-2 border-white dark:border-brand-blue overflow-hidden">
                     <Image
-                      src={userData?.photoURL || user.photoURL}
-                      alt={userData?.displayName || user.displayName || ''}
+                      src={userData?.photoURL || user?.photoURL || ''}
+                      alt={userData?.displayName || user?.displayName || ''}
                       fill
                       sizes="128px"
                       className="object-cover group-hover:scale-110 transition-transform duration-700"
