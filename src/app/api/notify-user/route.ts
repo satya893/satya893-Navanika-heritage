@@ -1,10 +1,31 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { verifyAuthToken } from '@/lib/firebase-admin';
 
 type NotificationType = 'order_confirmation' | 'order_shipped' | 'order_delivered' | 'low_stock' | 'abandoned_cart' | 'order_refunded';
 
 export async function POST(request: Request) {
   try {
+    const internalSecret = request.headers.get('x-internal-secret');
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    let isAuthenticated = false;
+    if (internalSecret && process.env.API_SECRET && internalSecret === process.env.API_SECRET) {
+      isAuthenticated = true;
+    } else if (token) {
+      try {
+        await verifyAuthToken(token);
+        isAuthenticated = true;
+      } catch (err) {
+        isAuthenticated = false;
+      }
+    }
+
+    if (!isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { 
       email, 

@@ -168,9 +168,13 @@ export default function CheckoutPage() {
 
   const sendNotifications = async (orderId: string) => {
     try {
+      const token = await user?.getIdToken();
       await fetch('/api/notify-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({
           email: user?.email,
           phone: shipping.phone,
