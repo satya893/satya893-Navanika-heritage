@@ -20,6 +20,11 @@ export async function POST(request: Request) {
 
     const orderData = orderSnap.data();
 
+    const authUserId = request.headers.get('x-user-id');
+    if (!authUserId || authUserId !== orderData?.userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (action === 'cancel_request') {
       await orderRef.update({
         status: 'cancellation_pending',

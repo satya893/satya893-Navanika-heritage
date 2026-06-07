@@ -7,6 +7,9 @@ const apiPaths = ['/api'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestHeaders = new Headers(request.headers);
+  // Strip potentially spoofed header
+  requestHeaders.delete('x-user-id');
 
   // Protect API routes
   if (apiPaths.some(path => pathname.startsWith(path))) {
@@ -16,7 +19,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     try {
-      await verifyAuthToken(token);
+      const decoded = await verifyAuthToken(token);
+      const uid = decoded.uid || decoded.sub || decoded.user_id;
+      if (uid) {
+        requestHeaders.set('x-user-id', uid);
+      }
     } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
@@ -37,7 +44,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {
