@@ -60,6 +60,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       {/* Floating Actions */}
       <div className="fixed bottom-24 md:bottom-32 lg:bottom-8 right-6 lg:right-8 flex flex-col gap-4 z-40">
         <button 
+          aria-label="Virtual Atelier"
           onClick={() => setIsGenOpen(true)}
           className="w-14 h-14 bg-brand-gold text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
           title="Virtual Atelier"
@@ -67,6 +68,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
           <Sparkles size={24} />
         </button>
         <button 
+          aria-label="Style Advisor"
           onClick={() => setIsChatOpen(true)}
           className="w-14 h-14 bg-brand-blue dark:bg-brand-beige text-brand-beige dark:text-brand-blue rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-transform"
           title="Style Advisor"

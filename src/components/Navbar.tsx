@@ -62,7 +62,7 @@ export default function Navbar({
 
         {/* Left Side: Hamburger (Mobile/Tablet) / Desktop Logo Start */}
         <div className="flex items-center xl:hidden w-1/4">
-          <button onClick={() => setIsMobileMenuOpen(true)} className={`p-2 -ml-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-colors`}>
+          <button aria-label="Open mobile menu" onClick={() => setIsMobileMenuOpen(true)} className={`p-2 -ml-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-colors`}>
             <Menu size={22} />
           </button>
         </div>
@@ -108,18 +108,19 @@ export default function Navbar({
         {/* Right Side: Actions */}
         <div className="flex-1 xl:flex-none flex items-center justify-end gap-2 md:gap-4 xl:gap-10 shrink-0">
           <button 
+            aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             onClick={toggleDarkMode}
             className={`hidden md:block p-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-colors`}
             title={isDarkMode ? "Light Mode" : "Dark Mode"}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <button onClick={onOpenWishlist} className={`hidden md:block relative p-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-colors`}>
+          <button aria-label="Open wishlist" onClick={onOpenWishlist} className={`hidden md:block relative p-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-colors`}>
             <Heart size={20} />
             {wishlistCount > 0 && <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">{wishlistCount}</span>}
           </button>
           <NotificationBell />
-          <button onClick={onOpenCart} className={`relative p-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-all`}>
+          <button aria-label="Open cart" onClick={onOpenCart} className={`relative p-2 ${isDarkMode ? 'text-brand-beige hover:text-brand-gold' : 'text-brand-blue hover:text-brand-gold'} transition-all`}>
             <ShoppingBag size={20} className="md:w-6 md:h-6" />
             {cartCount > 0 && <span className="absolute top-1 right-1 bg-brand-gold text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
           </button>
@@ -140,7 +141,7 @@ export default function Navbar({
                   className="rounded-full border-2 border-brand-gold/30 hover:border-brand-gold transition-all shadow-md" 
                 />
               </Link>
-              <button onClick={onLogout} className={`${isDarkMode ? 'text-brand-beige/40 hover:text-brand-gold' : 'text-brand-blue/40 hover:text-brand-gold'} transition-colors p-1`}><LogOut size={18} /></button>
+              <button aria-label="Logout" onClick={onLogout} className={`${isDarkMode ? 'text-brand-beige/40 hover:text-brand-gold' : 'text-brand-blue/40 hover:text-brand-gold'} transition-colors p-1`}><LogOut size={18} /></button>
             </div>
           ) : (
             <button onClick={onLogin} className={`hidden md:flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] font-bold ${isDarkMode ? 'text-brand-beige border-brand-beige/20' : 'text-brand-blue border-brand-blue/20'} px-5 py-2.5 border rounded-sm hover:bg-brand-gold hover:text-brand-blue hover:border-brand-gold transition-all duration-300`}>
@@ -186,6 +187,7 @@ export default function Navbar({
                 <span className="font-serif tracking-[0.2em] text-brand-gold text-sm">NAVANIKA</span>
               </div>
               <button 
+                aria-label="Close mobile menu"
                 onClick={() => setIsMobileMenuOpen(false)} 
                 className={`p-2 ${isDarkMode ? 'text-brand-beige' : 'text-brand-blue'} hover:text-brand-gold transition-colors`}
               >
