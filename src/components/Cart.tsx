@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { User } from 'firebase/auth';
 import { doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
+import { useApp } from '../context/AppContext';
 
 interface CartProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ interface CartProps {
 }
 
 export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartProps) {
-  const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  const { cartTotal } = useApp();
 
   const updateQuantity = async (itemId: string, delta: number) => {
     if (!user) return;
@@ -109,7 +110,7 @@ export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartPr
             <div className="p-10 bg-brand-beige/10 dark:bg-black border-t border-brand-blue/5 dark:border-white/10">
               <div className="flex justify-between text-2xl font-serif text-brand-blue dark:text-brand-beige mb-8">
                 <span>Total Investment</span>
-                <span>${total.toFixed(2)}</span>
+                <span>${cartTotal.toFixed(2)}</span>
               </div>
               <button onClick={onCheckout} className="w-full bg-brand-gold text-white font-bold py-6 text-[10px] uppercase tracking-[0.4em] hover:bg-brand-blue dark:hover:bg-brand-beige dark:hover:text-brand-blue transition-all shadow-xl">
                 Secure Checkout

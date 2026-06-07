@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, onSnapshot, query, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -10,6 +10,8 @@ interface AppContextType {
   user: User | null;
   userData: any | null;
   cart: any[];
+  cartCount: number;
+  cartTotal: number;
   wishlist: any[];
   isAuthOpen: boolean;
   setIsAuthOpen: (open: boolean) => void;
@@ -48,6 +50,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(email => email.trim().toLowerCase()) || [];
+
+  const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
 
   useEffect(() => {
     // Initial theme and guest data setup
@@ -218,7 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, userData, cart, wishlist,
+      user, userData, cart, cartCount, cartTotal, wishlist,
       isAuthOpen, setIsAuthOpen,
       isCartOpen, setIsCartOpen,
       isWishlistOpen, setIsWishlistOpen,
