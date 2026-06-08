@@ -34,6 +34,12 @@ export async function POST(request: Request) {
       couponCode?: string;
     };
 
+    const authUserId = request.headers.get('x-user-id');
+    if (!authUserId || authUserId !== userId) {
+      console.error('❌ [place-order] Unauthorized user access attempt');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
     console.log('🔵 [place-order] Received request:', { userId, itemsCount: items?.length, paymentMethod, walletUsed, couponCode });
 
     if (!userId || !Array.isArray(items) || items.length === 0) {

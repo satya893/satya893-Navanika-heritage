@@ -1,0 +1,4 @@
+## 2024-06-08 - [Critical] Insecure Direct Object Reference (IDOR) in place-order Route
+**Vulnerability:** The `/api/checkout/place-order` route extracted `userId` directly from the user-provided request body and used it to interact with the database (creating orders and querying users) without validating if it matched the currently authenticated user.
+**Learning:** Next.js `middleware.ts` was authenticating tokens but not securely passing the verified user identity to the downstream route handlers.
+**Prevention:** Always extract and pass the verified user ID from the middleware using secure request headers (e.g., `x-user-id`). Ensure the middleware strictly strips any incoming headers of the same name to prevent spoofing. In the route handler, validate that the requested action's target ID matches the authenticated header ID using a fail-closed check (`if (!authUserId || authUserId !== requestedId)`).
