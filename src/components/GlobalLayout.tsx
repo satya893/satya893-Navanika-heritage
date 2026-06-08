@@ -18,7 +18,7 @@ import MobileBottomNav from './MobileBottomNav';
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const {
-    user, cart, wishlist,
+    user, cart, cartCount, wishlist,
     isAuthOpen, setIsAuthOpen,
     isCartOpen, setIsCartOpen,
     isWishlistOpen, setIsWishlistOpen,
@@ -45,7 +45,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         user={user} 
         onLogin={() => setIsAuthOpen(true)}
         onLogout={logout} 
-        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
+        cartCount={cartCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
