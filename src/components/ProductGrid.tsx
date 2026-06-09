@@ -64,18 +64,20 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
               )}
               <div className="absolute top-4 right-4 z-10">
                 <button 
+                  aria-label="Toggle Wishlist"
                   onClick={(e) => { e.stopPropagation(); onToggleWishlist(product); }} 
-                  className={`w-10 h-10 flex items-center justify-center bg-brand-blue/50 dark:bg-black/50 backdrop-blur-md rounded-full shadow-lg transition-all ${isWishlisted ? 'text-red-500' : 'text-white/40'}`}
+                  className={`w-10 h-10 flex items-center justify-center bg-brand-blue/50 dark:bg-black/50 backdrop-blur-md rounded-full shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:outline-none ${isWishlisted ? 'text-red-500' : 'text-white/40'}`}
                 >
                   <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
                 </button>
               </div>
-              <div 
+              <button
+                aria-label="Add to cart"
                 onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-                className="absolute bottom-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 z-10"
+                className="absolute bottom-6 right-6 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100 transition-all duration-500 z-10 focus-visible:ring-2 focus-visible:ring-brand-gold focus-visible:outline-none rounded-sm"
               >
                  <div className="w-12 h-12 bg-brand-gold text-white flex items-center justify-center shadow-xl rounded-sm"><Plus size={20} /></div>
-              </div>
+              </button>
             </div>
 
             <div className="text-center px-4">
