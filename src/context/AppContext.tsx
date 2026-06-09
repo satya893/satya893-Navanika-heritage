@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, onSnapshot, query, doc, setDoc, deleteDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -29,6 +29,8 @@ interface AppContextType {
   toggleWishlist: (product: Product) => Promise<void>;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  cartCount: number;
+  cartTotal: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -179,6 +181,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
 
+  // Performance optimization: Memoize cart calculations to prevent O(N) recalculations
+  // on every render across multiple components (GlobalLayout, MobileBottomNav, Cart, Checkout).
+  const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + (item.price * item.quantity), 0), [cart]);
+
   const toggleWishlist = async (product: Product) => {
     if (user) {
       const wishlistRef = doc(db, 'users', user.uid, 'wishlist', product.id);
@@ -219,6 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, userData, cart, wishlist,
+      cartCount, cartTotal,
       isAuthOpen, setIsAuthOpen,
       isCartOpen, setIsCartOpen,
       isWishlistOpen, setIsWishlistOpen,
