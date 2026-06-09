@@ -18,7 +18,7 @@ import MobileBottomNav from './MobileBottomNav';
 
 export default function GlobalLayout({ children }: { children: React.ReactNode }) {
   const {
-    user, cart, wishlist,
+    user, cart, cartCount, cartTotal, wishlist,
     isAuthOpen, setIsAuthOpen,
     isCartOpen, setIsCartOpen,
     isWishlistOpen, setIsWishlistOpen,
@@ -45,7 +45,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
         user={user} 
         onLogin={() => setIsAuthOpen(true)}
         onLogout={logout} 
-        cartCount={cart.reduce((acc, item) => acc + item.quantity, 0)}
+        cartCount={cartCount}
         wishlistCount={wishlist.length}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
@@ -78,7 +78,7 @@ export default function GlobalLayout({ children }: { children: React.ReactNode }
       </div>
 
       <AnimatePresence>
-        {isCartOpen && <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} user={user} cart={cart} onCheckout={handleCheckout} />}
+        {isCartOpen && <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} user={user} cart={cart} cartTotal={cartTotal} onCheckout={handleCheckout} />}
         {isWishlistOpen && <Wishlist isOpen={isWishlistOpen} onClose={() => setIsWishlistOpen(false)} user={user} wishlist={wishlist} />}
         {isChatOpen && <ChatAdvisor isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />}
         {isGenOpen && <ImageGenerator isOpen={isGenOpen} onClose={() => setIsGenOpen(false)} />}

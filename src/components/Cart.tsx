@@ -11,11 +11,12 @@ interface CartProps {
   onClose: () => void;
   user: User | null;
   cart: any[];
+  cartTotal?: number;
   onCheckout: () => void;
 }
 
-export default function Cart({ isOpen, onClose, user, cart, onCheckout }: CartProps) {
-  const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+export default function Cart({ isOpen, onClose, user, cart, cartTotal, onCheckout }: CartProps) {
+  const total = cartTotal ?? cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   const updateQuantity = async (itemId: string, delta: number) => {
     if (!user) return;
