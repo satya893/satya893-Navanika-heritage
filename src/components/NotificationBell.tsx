@@ -94,7 +94,7 @@ export default function NotificationBell() {
               <div className="p-4 border-b border-brand-gold/10 flex justify-between items-center">
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-brand-blue dark:text-brand-beige">Notifications</h3>
                 {unreadCount > 0 && (
-                  <button 
+                  <button aria-label="Mark all notifications as read"
                     onClick={() => markAllAsRead(user.uid)}
                     className="text-[9px] font-bold text-brand-gold uppercase tracking-tighter hover:underline"
                   >
@@ -111,7 +111,7 @@ export default function NotificationBell() {
                   </div>
                 ) : (
                   notifications.map((n) => (
-                    <button
+                    <button aria-label={`View notification: ${n.title}`}
                       key={n.id}
                       onClick={() => handleNotificationClick(n)}
                       className={`w-full text-left p-4 border-b border-brand-gold/5 hover:bg-brand-gold/5 transition-all flex gap-3 ${!n.isRead ? 'bg-brand-gold/[0.03]' : ''}`}

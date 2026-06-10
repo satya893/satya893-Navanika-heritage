@@ -80,7 +80,7 @@ export default function ProductDetails({ product, onBack, onAddToCart, onToggleW
               </AnimatePresence>
               
               {/* Floating Wishlist Button on Image for Mobile */}
-              <button 
+              <button aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
                 onClick={() => onToggleWishlist(product)}
                 className={`absolute top-4 right-4 p-3 rounded-full backdrop-blur-md transition-all lg:hidden ${
                   isWishlisted ? 'bg-red-500 text-white shadow-lg' : 'bg-white/20 border border-white/20 text-white'
@@ -105,7 +105,7 @@ export default function ProductDetails({ product, onBack, onAddToCart, onToggleW
               <h1 className="text-4xl md:text-6xl font-serif text-brand-blue dark:text-brand-beige mb-6 leading-[1.1] tracking-tight">{product.name}</h1>
               <p className="text-3xl md:text-4xl font-serif text-brand-gold">₹{product.price.toLocaleString('en-IN')}</p>
             </div>
-            <button 
+            <button aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
               onClick={() => onToggleWishlist(product)}
               className={`hidden lg:flex p-5 rounded-full border transition-all duration-500 ${
                 isWishlisted 
