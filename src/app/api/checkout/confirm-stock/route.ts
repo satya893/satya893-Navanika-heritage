@@ -9,6 +9,11 @@ export async function POST(request: Request) {
       cartItems: Array<{ productId: string; quantity: number; size?: string | null }>;
     };
 
+    const authUserId = request.headers.get('x-user-id');
+    if (!authUserId || authUserId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!userId || !Array.isArray(cartItems) || cartItems.length === 0) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
