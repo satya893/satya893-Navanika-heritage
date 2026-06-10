@@ -16,7 +16,7 @@ type Step = typeof STEPS[number] | 'UPI_Verification';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { user, userData, cart, setIsAuthOpen } = useApp();
+  const { user, userData, cart, cartTotal, setIsAuthOpen } = useApp();
   
   const [step, setStep] = useState<Step>('Shipping');
   const [shipping, setShipping] = useState<ShippingInfo>({
@@ -82,7 +82,7 @@ export default function CheckoutPage() {
   const walletCredit = useWallet ? Math.min(walletBalance, totals.total) : 0;
   const remainingTotal = totals.total - walletCredit;
 
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const subtotal = cartTotal;
   const stepIndex = step === 'UPI_Verification' ? 2 : STEPS.indexOf(step as any);
 
   useEffect(() => {

@@ -1,0 +1,3 @@
+## 2024-06-10 - Memoizing Global Context Reductions
+**Learning:** Calculating derived state using `reduce` inline inside `AppContext.Provider` or in the consuming components (e.g., `cartCount`, `cartTotal`) forces all consumers to recalculate those derivations on every render, which is a $O(N)$ penalty where $N$ is the number of consuming components multiplied by items in the cart. Also, `item.quantity || 1` is dangerous in e-commerce because `0` evaluates to `1`.
+**Action:** Centralize derivations in `AppContext` using `useMemo` and provide the derived primitives directly. Always use `??` instead of `||` for default quantities (`item.quantity ?? 1`) to preserve intentional `0` values.
