@@ -1,3 +1,3 @@
-## 2024-06-07 - Missing ARIA Labels on Icon-Only Buttons
-**Learning:** Core navigation components (`Navbar`, `GlobalLayout`, `NotificationBell`) heavily rely on icon-only buttons (`lucide-react` icons) without `aria-label` attributes. This makes primary actions (cart, wishlist, dark mode, floating actions) completely inaccessible to screen readers.
-**Action:** Always verify that every `<button>` element containing only an `<Icon />` has a descriptive `aria-label` attribute added during UI component creation or modification.
+## 2024-06-10 - Add missing ARIA labels to icon-only buttons
+**Learning:** Icon-only buttons (like X, plus/minus, and heart icons) frequently lack `aria-label`s across `Cart.tsx`, `Wishlist.tsx`, `ProductDetails.tsx`, and `NotificationBell.tsx`, creating an accessibility barrier for screen reader users. Interpolating variables like item names into labels provides much better context.
+**Action:** Always verify that interactive icon elements have a descriptive `aria-label` when adding or modifying components, specifically checking for cases like remove item buttons or toggle buttons inside lists.
