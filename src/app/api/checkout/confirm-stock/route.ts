@@ -13,9 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
-    // Verify stock exists and is sufficient
-    const updates: Array<{ productId: string; currentStock: number; requested: number }> = [];
-
+    // Validate request items first
     for (const item of cartItems) {
       if (!item?.productId) {
         return NextResponse.json({ error: 'Missing productId' }, { status: 400 });
@@ -24,8 +22,24 @@ export async function POST(request: Request) {
       if (!Number.isFinite(qty) || qty <= 0) {
         return NextResponse.json({ error: 'Invalid quantity' }, { status: 400 });
       }
+    }
 
-      const productSnap = await dbAdmin.collection('products').doc(item.productId).get();
+    // Verify stock exists and is sufficient using a single batch query
+    const updates: Array<{ productId: string; currentStock: number; requested: number }> = [];
+
+    if (cartItems.length === 0) {
+      return NextResponse.json({ success: true, items: updates });
+    }
+
+    const productRefs = cartItems.map(item => dbAdmin.collection('products').doc(item.productId));
+    const productSnaps = await dbAdmin.getAll(...productRefs);
+
+
+    for (let i = 0; i < cartItems.length; i++) {
+      const item = cartItems[i];
+      const productSnap = productSnaps[i];
+      const qty = Number(item.quantity);
+
       if (!productSnap.exists) {
         return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 404 });
       }
