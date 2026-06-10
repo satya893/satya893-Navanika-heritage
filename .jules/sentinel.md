@@ -1,0 +1,4 @@
+## 2024-05-18 - [Header Spoofing / IDOR in Next.js Middleware]
+**Vulnerability:** Next.js API route handlers were blinding trusting a `userId` field sent in the request body for authorization logic (e.g., when clearing a cart or placing an order).
+**Learning:** Middleware alone is not enough for authorization. Even if a request is authenticated via a Bearer token, if the route handler implicitly trusts the user ID provided by the client, a malicious user can supply someone else's `userId` and perform actions on their behalf (IDOR/BOLA).
+**Prevention:** In `middleware.ts`, verify the auth token, extract the valid `uid`, strip any pre-existing spoofed `x-user-id` headers, and securely set the verified `x-user-id` header before passing the request downstream. Route handlers must then verify the request payload `userId` matches the trusted `x-user-id` header (`if (authUserId !== bodyUserId)`).
