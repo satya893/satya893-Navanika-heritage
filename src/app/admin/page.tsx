@@ -71,21 +71,32 @@ export default function AdminDashboard() {
   }, [hasAccess]);
 
   const fetchGiftCards = async () => {
-    const gcSnap = await getDocs(query(collection(db, 'giftCards'), orderBy('createdAt', 'desc')));
-    setGiftCards(gcSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    
-    const couponSnap = await getDocs(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')));
-    setCoupons(couponSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      // PERFORMANCE OPTIMIZATION: Concurrently fetch independent data sets to prevent N+1 query network bottlenecks
+      // Expected impact: Speeds up initial loading time.
+      const [gcSnap, couponSnap] = await Promise.all([
+        getDocs(query(collection(db, 'giftCards'), orderBy('createdAt', 'desc'))),
+        getDocs(query(collection(db, 'coupons'), orderBy('createdAt', 'desc')))
+      ]);
+      setGiftCards(gcSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCoupons(couponSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      console.error("Error fetching gift cards/coupons:", error);
+    }
   };
 
   const fetchAdminData = async () => {
     try {
-      // Fetch recent orders
-      const ordersSnap = await getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(50)));
+      // PERFORMANCE OPTIMIZATION: Concurrently fetch independent data sets to prevent N+1 query network bottlenecks
+      // Expected impact: Speeds up initial loading time.
+      const [ordersSnap, productsSnap, usersSnap] = await Promise.all([
+        getDocs(query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(50))),
+        getDocs(query(collection(db, 'products'))),
+        getDocs(query(collection(db, 'users')))
+      ]);
+
       setOrders(ordersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
-      // Fetch products (fetch all for admin view)
-      const productsSnap = await getDocs(query(collection(db, 'products')));
       // Sort in JS: put items with createdAt first (newest), then the rest
       const fetchedProducts = productsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
       fetchedProducts.sort((a, b) => {
@@ -96,8 +107,6 @@ export default function AdminDashboard() {
       });
       setProducts(fetchedProducts);
 
-      // Fetch users
-      const usersSnap = await getDocs(query(collection(db, 'users')));
       setUsers(usersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
       console.error("Error fetching admin data:", error);
