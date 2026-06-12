@@ -16,6 +16,15 @@ interface ProductGridProps {
 export default function ProductGrid({ products, onAddToCart, onToggleWishlist, onProductClick, wishlist, isLoading = false }: ProductGridProps) {
   const router = useRouter();
 
+  const wishlistedIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    wishlist.forEach(p => {
+      if (p.id) ids.add(p.id);
+      if (p.productId) ids.add(p.productId);
+    });
+    return ids;
+  }, [wishlist]);
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
@@ -36,7 +45,8 @@ export default function ProductGrid({ products, onAddToCart, onToggleWishlist, o
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-16 md:gap-y-20">
       {products.map(product => {
-        const isWishlisted = wishlist.some(p => p.id === product.id || p.productId === product.id);
+        // Optimization: O(1) Set lookup instead of O(M) array some() per product
+        const isWishlisted = wishlistedIds.has(product.id);
         return (
           <div 
             key={product.id} 
