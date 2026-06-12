@@ -1,0 +1,3 @@
+## 2024-05-30 - Memoizing cart derived values
+**Learning:** Derived values from the context state (like `cartCount`) were being calculated across multiple component levels via `cart.reduce`. While `cartCount` safely fits into Context, moving `cartTotal` to AppContext was fraught with issues as it created encapsulation risks within deeply nested components and violated hook rule placement.
+**Action:** Centralize the state logic inside the AppContext using `useMemo()` to calculate `cartCount` once when `cart` changes, and distribute via Context. Avoid migrating `cartTotal` into Context since it depends on isolated checkout states and breaks component structures.
