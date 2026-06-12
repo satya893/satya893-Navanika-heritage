@@ -41,6 +41,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
+    // Security enhancement: Prevent IDOR by verifying token ID matches requested userId
+    const authenticatedUserId = request.headers.get('x-user-id');
+    if (authenticatedUserId && authenticatedUserId !== userId) {
+      console.error('❌ [place-order] Security violation - x-user-id mismatch');
+      return NextResponse.json({ error: 'Forbidden: Cannot place order for another user' }, { status: 403 });
+    }
+
     // Transaction: decrement stock + create order atomically
     const orderRef = dbAdmin.collection('orders').doc();
     const userRef = dbAdmin.collection('users').doc(userId);
