@@ -29,6 +29,7 @@ interface AppContextType {
   toggleWishlist: (product: Product) => Promise<void>;
   isDarkMode: boolean;
   toggleDarkMode: () => void;
+  cartCount: number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -48,6 +49,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(email => email.trim().toLowerCase()) || [];
+
+  const cartCount = React.useMemo(() => cart.reduce((acc, item) => acc + (item.quantity ?? 1), 0), [cart]);
 
   useEffect(() => {
     // Initial theme and guest data setup
@@ -219,6 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppContext.Provider value={{
       user, userData, cart, wishlist,
+      cartCount,
       isAuthOpen, setIsAuthOpen,
       isCartOpen, setIsCartOpen,
       isWishlistOpen, setIsWishlistOpen,
