@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
-import { dbAdmin, sendUserNotificationAdmin, sendAdminNotificationServer } from '@/lib/firebase-admin';
+import { dbAdmin, sendUserNotificationAdmin, sendAdminNotificationServer, verifyAuthToken } from '@/lib/firebase-admin';
 
 export async function POST(request: Request) {
   try {
+    // Check Authorization
+    const authHeader = request.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decodedToken = await verifyAuthToken(token);
+    const userEmail = decodedToken.email?.toLowerCase() || '';
+    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map(email => email.trim().toLowerCase()) || [];
+
+    if (!adminEmails.includes(userEmail)) {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const { type, userId, notification } = await request.json();
 
     if (type === 'broadcast') {
