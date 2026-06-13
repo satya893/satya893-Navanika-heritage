@@ -8,8 +8,7 @@ import { useApp } from '../context/AppContext';
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
-  const { cart, setIsCartOpen } = useApp();
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const { cartCount } = useApp();
 
   const navItems = [
     { label: 'Home', icon: Home, path: '/' },
