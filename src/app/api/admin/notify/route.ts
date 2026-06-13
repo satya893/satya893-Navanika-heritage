@@ -1,8 +1,24 @@
-import { NextResponse } from 'next/server';
-import { dbAdmin, sendUserNotificationAdmin, sendAdminNotificationServer } from '@/lib/firebase-admin';
+import { NextRequest, NextResponse } from 'next/server';
+import { dbAdmin, sendUserNotificationAdmin, sendAdminNotificationServer, verifyAuthToken } from '@/lib/firebase-admin';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Verify admin authorization to prevent privilege escalation
+    // middleware.ts only checks if token is valid, not if user is an admin
+    const token = request.headers.get('authorization')?.replace('Bearer ', '') ||
+                  request.cookies.get('token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decodedToken = await verifyAuthToken(token);
+    const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(',').map((e: string) => e.trim().toLowerCase()) || [];
+
+    if (!decodedToken.email || !adminEmails.includes(decodedToken.email.toLowerCase())) {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
     const { type, userId, notification } = await request.json();
 
     if (type === 'broadcast') {
@@ -41,8 +57,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Invalid notification type' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Notification API Error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to send notification' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Failed to send notification';
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

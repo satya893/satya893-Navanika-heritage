@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     }
 
     // 2. SMS Logic (Twilio) - COMMENTED OUT UNTIL ACTIVATED
-    let smsSent = false;
+    const smsSent = false;
     /*
     if (phone && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
       const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
