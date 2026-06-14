@@ -29,7 +29,12 @@ export async function POST(request: Request) {
       .update(body.toString())
       .digest('hex');
 
-    const isAuthentic = expectedSignature === razorpay_signature;
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+    const signatureBuffer = Buffer.from(razorpay_signature || '', 'hex');
+
+    // Use timingSafeEqual to prevent timing attacks
+    const isAuthentic = expectedBuffer.length === signatureBuffer.length &&
+                        crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
 
     if (isAuthentic) {
       console.log(`Payment verified for order ${razorpay_order_id}`);
